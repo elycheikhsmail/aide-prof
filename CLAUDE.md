@@ -40,6 +40,67 @@ bun run preview
 # Sert le build de production localement pour tester
 ```
 
+## Git Workflow et Convention de Branches
+
+**IMPORTANT:** Ce projet suit une convention stricte de branching pour maintenir un workflow de développement organisé.
+
+### Règle de Branching
+
+**Toute nouvelle fonctionnalité DOIT être développée dans une branche feature séparée** suivant la convention :
+
+```
+feature/short-name-of-the-feature
+```
+
+**Exemples de noms de branches valides:**
+- `feature/student-dashboard`
+- `feature/pdf-export`
+- `feature/auto-correction`
+- `fix/login-bug`
+- `refactor/evaluation-form`
+
+### Workflow Standard
+
+1. **Créer une branche depuis main:**
+   ```bash
+   git checkout main
+   git pull origin main
+   git checkout -b feature/nom-fonctionnalite
+   ```
+
+2. **Développer et tester:**
+   ```bash
+   # Faire les modifications...
+   bun run build  # Vérifier que le build fonctionne
+   bun run lint   # Vérifier le linting
+   ```
+
+3. **Commiter et pousser:**
+   ```bash
+   git add .
+   git commit -m "feat: description de la fonctionnalité"
+   git push -u origin feature/nom-fonctionnalite
+   ```
+
+4. **Créer une Pull Request:**
+   ```bash
+   gh pr create --title "Titre de la PR" --body "Description..."
+   ```
+
+5. **Après révision et approbation, merger dans main**
+
+### Règles Strictes
+
+- ❌ **JAMAIS** commit directement sur `main`
+- ✅ **TOUJOURS** créer une branche feature pour toute nouvelle fonctionnalité
+- ✅ **TOUJOURS** créer une PR avant de merger dans `main`
+- ✅ **TOUJOURS** s'assurer que `bun run build` fonctionne avant de pousser
+- ✅ **TOUJOURS** demander une révision de code avant le merge
+
+**Voir `.claude/rules/git-workflow.md` pour plus de détails.**
+
+**Dépôt GitHub:** https://github.com/elycheikhsmail/aide-prof
+
 ## Architecture du Projet
 
 ### Structure des Dossiers
