@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Upload, FileDown } from 'lucide-react';
+import { Plus, Upload, FileDown, Loader2 } from 'lucide-react';
 import { Button, Card, Badge } from '../../components/ui';
 import { ImportEvaluationModal } from '../../components/professor/ImportEvaluationModal';
 import { GeneratePdfModal, type PdfGenerationOptions } from '../../components/professor/GeneratePdfModal';
@@ -10,13 +10,19 @@ import type { Evaluation } from '../../types';
 
 export function Evaluations() {
   const navigate = useNavigate();
-  const { evaluations, addEvaluation } = useEvaluations();
+  const { evaluations, addEvaluation, isLoading, error } = useEvaluations();
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [selectedEvaluation, setSelectedEvaluation] = useState<Evaluation | null>(null);
   const [isGeneratePdfModalOpen, setIsGeneratePdfModalOpen] = useState(false);
 
-  const handleImportEvaluation = (evaluation: Evaluation) => {
-    addEvaluation(evaluation);
+  const handleImportEvaluation = async (evaluation: Evaluation) => {
+    await addEvaluation({
+      title: evaluation.title,
+      subject: evaluation.subject,
+      date: evaluation.date,
+      duration: evaluation.duration,
+      totalPoints: evaluation.totalPoints,
+    });
     setIsImportModalOpen(false);
   };
 
@@ -45,6 +51,14 @@ export function Evaluations() {
     }
   };
 
+  if (isLoading && evaluations.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
   return (
     <>
       <div>
@@ -69,6 +83,12 @@ export function Evaluations() {
             </Button>
           </div>
         </div>
+
+        {error && (
+          <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm mb-6">
+            {error}
+          </div>
+        )}
 
         {evaluations.length === 0 ? (
           <div className="text-center py-12 bg-gray-50 rounded-lg">

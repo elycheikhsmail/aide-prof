@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { EvaluationsProvider } from './contexts/EvaluationsContext';
+import { ClassesProvider } from './contexts/ClassesContext';
 import { MainLayout } from './components/layout';
 import { ProfessorDashboard } from './pages/professor/Dashboard';
 import { Evaluations } from './pages/professor/Evaluations';
@@ -20,8 +22,8 @@ function ProtectedRoutes() {
     return <Navigate to="/login" replace />;
   }
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate('/login');
   };
 
@@ -55,7 +57,15 @@ function ProtectedRoutes() {
 }
 
 function AppContent() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
 
   return (
     <Routes>
@@ -71,7 +81,9 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <EvaluationsProvider>
-          <AppContent />
+          <ClassesProvider>
+            <AppContent />
+          </ClassesProvider>
         </EvaluationsProvider>
       </AuthProvider>
     </BrowserRouter>
