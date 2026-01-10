@@ -1,5 +1,5 @@
 import { pgTable, uuid, varchar, timestamp, integer, date, pgEnum } from 'drizzle-orm/pg-core';
-import { users } from './users.js';
+import { users } from './users';
 
 export const evaluationStatusEnum = pgEnum('evaluation_status', ['draft', 'active', 'correcting', 'completed']);
 

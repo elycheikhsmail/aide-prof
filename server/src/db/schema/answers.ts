@@ -1,6 +1,6 @@
 import { pgTable, uuid, text, decimal, timestamp, jsonb } from 'drizzle-orm/pg-core';
-import { studentCopies } from './studentCopies.js';
-import { questions } from './questions.js';
+import { studentCopies } from './studentCopies';
+import { questions } from './questions';
 
 export const answers = pgTable('answers', {
   id: uuid('id').primaryKey().defaultRandom(),

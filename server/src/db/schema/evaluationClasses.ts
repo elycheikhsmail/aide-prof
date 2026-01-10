@@ -1,6 +1,6 @@
 import { pgTable, uuid, primaryKey } from 'drizzle-orm/pg-core';
-import { evaluations } from './evaluations.js';
-import { classes } from './classes.js';
+import { evaluations } from './evaluations';
+import { classes } from './classes';
 
 export const evaluationClasses = pgTable('evaluation_classes', {
   evaluationId: uuid('evaluation_id').notNull().references(() => evaluations.id, { onDelete: 'cascade' }),

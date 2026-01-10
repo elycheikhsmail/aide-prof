@@ -1,6 +1,6 @@
 import { pgTable, uuid, varchar, decimal, timestamp, pgEnum } from 'drizzle-orm/pg-core';
-import { evaluations } from './evaluations.js';
-import { students } from './students.js';
+import { evaluations } from './evaluations';
+import { students } from './students';
 
 export const copyStatusEnum = pgEnum('copy_status', ['pending', 'associated', 'corrected', 'validated']);
 
