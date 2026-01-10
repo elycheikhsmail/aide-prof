@@ -5,18 +5,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 "Aide-Prof" est une application web d'assistant d'évaluation éducatif permettant aux professeurs de créer des évaluations, scanner et corriger automatiquement les copies d'étudiants avec l'aide de l'IA. Les étudiants peuvent consulter leurs résultats en ligne.
 
-**Stack technique:** React 19.2 + TypeScript 5.9 + Vite 7.x + Tailwind CSS 4.x + React Router 7.11
+**Stack technique:**
+- **Frontend:** React 19.2 + TypeScript 5.9 + Vite 7.x + Tailwind CSS 4.x + React Router 7.11
+- **Backend:** Hono.js + Drizzle ORM + PostgreSQL + Zod
 
 ## Development Commands
 
+### Frontend (racine du projet)
+
 **First-time setup:**
 ```bash
-bun install  # ou npm install
+bun install
 ```
 
 **Development server:**
 ```bash
-bun dev      # ou npm run dev
+bun dev
 # Démarre sur http://localhost:5173
 ```
 
@@ -38,6 +42,46 @@ bun run lint
 ```bash
 bun run preview
 # Sert le build de production localement pour tester
+```
+
+### Backend (dossier /server)
+
+**First-time setup:**
+```bash
+cd server
+bun install
+```
+
+**Démarrer PostgreSQL avec Docker:**
+```bash
+docker-compose up -d
+# Démarre PostgreSQL sur localhost:5432
+# User: aideprof, Password: aideprof_secret, DB: aideprof
+```
+
+**Development server:**
+```bash
+cd server
+bun dev
+# Démarre sur http://localhost:3000
+# Hot reload avec tsx watch
+```
+
+**Build for production:**
+```bash
+cd server
+bun run build
+# Output: server/dist/
+```
+
+**Base de données (Drizzle):**
+```bash
+cd server
+bun run db:generate  # Génère les migrations
+bun run db:migrate   # Applique les migrations
+bun run db:push      # Push direct vers la DB (dev)
+bun run db:studio    # Interface web Drizzle Studio
+bun run db:seed      # Insère les données de test
 ```
 
 ## Git Workflow et Convention de Branches
@@ -105,6 +149,7 @@ feature/short-name-of-the-feature
 
 ### Structure des Dossiers
 
+**Frontend (`/src`):**
 ```
 src/
 ├── components/
@@ -124,6 +169,29 @@ src/
 ├── App.tsx              # Composant principal avec navigation
 ├── main.tsx             # Point d'entrée
 └── index.css            # Styles globaux Tailwind
+```
+
+**Backend (`/server`):**
+```
+server/
+├── package.json         # Dépendances backend
+├── tsconfig.json        # Config TypeScript serveur
+├── drizzle.config.ts    # Config Drizzle (migrations)
+└── src/
+    ├── index.ts         # Point d'entrée Hono
+    ├── config/
+    │   ├── env.ts       # Variables d'environnement
+    │   └── database.ts  # Connexion PostgreSQL (abstraction DB)
+    ├── db/
+    │   ├── schema/      # Schémas Drizzle (tables)
+    │   ├── migrations/  # Migrations SQL
+    │   └── seed.ts      # Données de test
+    ├── repositories/    # Couche d'abstraction DB (pattern Repository)
+    ├── services/        # Logique métier
+    ├── routes/          # Routes API Hono
+    ├── middlewares/     # Auth, error handling
+    ├── validators/      # Schémas Zod
+    └── types/           # Types partagés backend
 ```
 
 ### Architecture de Navigation
@@ -171,7 +239,7 @@ Exportés depuis `src/components/layout/index.ts`:
 
 ### Types de Données
 
-**Entités principales** (voir `src/types/index.ts`):
+**Entités principales** (voir `src/types/index.ts` et `server/src/db/schema/`):
 - `User` - Utilisateur (professeur ou étudiant)
 - `Class` - Classe d'étudiants
 - `Evaluation` - Évaluation/examen avec questions
@@ -179,7 +247,56 @@ Exportés depuis `src/components/layout/index.ts`:
 - `StudentCopy` - Copie d'étudiant scannée
 - `Answer` - Réponse d'un étudiant avec score AI
 - `Student` - Étudiant avec statistiques
-- `EvaluationResult` - Résultat d'évaluation avec rang
+- `Session` - Session d'authentification
+
+### API Backend
+
+**Base URL:** `http://localhost:3000/api/v1`
+
+**Routes d'authentification (`/auth`):**
+- `POST /auth/register` - Inscription
+- `POST /auth/login` - Connexion
+- `POST /auth/logout` - Déconnexion
+- `GET /auth/me` - Utilisateur courant
+
+**Routes classes (`/classes`):**
+- `GET /classes` - Liste des classes du professeur
+- `POST /classes` - Créer une classe
+- `GET /classes/:id` - Détail d'une classe
+- `PATCH /classes/:id` - Modifier une classe
+- `DELETE /classes/:id` - Supprimer une classe
+- `GET /classes/:id/students` - Étudiants d'une classe
+
+**Routes évaluations (`/evaluations`):**
+- `GET /evaluations` - Liste des évaluations
+- `POST /evaluations` - Créer une évaluation
+- `GET /evaluations/:id` - Détail d'une évaluation
+- `PATCH /evaluations/:id` - Modifier une évaluation
+- `DELETE /evaluations/:id` - Supprimer une évaluation
+- `GET /evaluations/:id/questions` - Questions d'une évaluation
+- `POST /evaluations/:id/questions` - Ajouter une question
+- `GET /evaluations/:id/copies` - Copies d'étudiants
+
+**Routes étudiants (`/students`):**
+- `GET /students` - Liste des étudiants
+- `POST /students` - Créer un étudiant
+- `GET /students/:id` - Détail d'un étudiant
+- `PATCH /students/:id` - Modifier un étudiant
+- `DELETE /students/:id` - Supprimer un étudiant
+- `GET /students/:id/results` - Résultats d'un étudiant
+
+### Architecture Backend - Abstraction DB
+
+Le backend utilise le **pattern Repository** pour abstraire la base de données, permettant de changer facilement de DB (PostgreSQL → MySQL) :
+
+```
+Routes → Services → Repositories → Drizzle ORM → PostgreSQL
+```
+
+**Pour changer de base de données :**
+1. Modifier `server/src/config/database.ts` (connexion)
+2. Adapter les schémas dans `server/src/db/schema/` (syntaxe Drizzle)
+3. Les repositories et services restent inchangés
 
 ### Données Mockées
 
@@ -240,18 +357,21 @@ Le fichier `src/data/mockData.ts` contient des données complètes pour le déve
 ## Notes de Développement
 
 **État actuel:**
-- Package manager: Bun (recommandé) ou npm - les deux fonctionnent
+- Package manager: Bun (recommandé)
 - ✅ Navigation avec React Router DOM 7.11 implémentée
-- Toutes les données sont mockées dans `src/data/mockData.ts`
+- ✅ Backend Hono.js avec API REST complète
+- ✅ Base de données PostgreSQL avec Drizzle ORM
+- ✅ Authentification par sessions côté serveur
+- ✅ Pattern Repository pour abstraction DB
 - Layout principal (Header + Sidebar) complètement fonctionnel
 - Dashboard professeur complètement implémenté
-- Pages professeur créées (Dashboard fonctionnel, autres en placeholder)
 
 **À implémenter:**
+- Connecter le frontend au backend (remplacer les données mockées)
 - State management global si nécessaire (suggéré: Zustand ou Context API)
-- Validation de formulaires (suggéré: React Hook Form + Zod)
-- Backend API et authentification
+- Validation de formulaires frontend (suggéré: React Hook Form + Zod)
 - Contenu des pages Évaluations, Classes, Statistiques, Paramètres
+- Interface étudiant complète
 
 **Conventions de code:**
 - Utiliser les composants UI depuis `src/components/ui/index.ts`

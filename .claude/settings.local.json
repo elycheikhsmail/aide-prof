@@ -3,11 +3,17 @@
     "allow": [
       "Bash(bun add:*)",
       "Bash(curl:*)",
-      "Bash(bun run build:*)"
+      "Bash(bun run build:*)",
+      "Bash(cat:*)",
+      "Bash(bun install:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(bun run db:push)",
+      "Bash(npx drizzle-kit:*)"
     ]
   },
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "playwright"
-  ],
-  "enableAllProjectMcpServers": true
+  ]
 }
