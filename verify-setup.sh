@@ -5,7 +5,7 @@ echo "================================================"
 echo ""
 
 echo "✅ 1. Vérification de la structure des dossiers..."
-if [ -d "src/components/ui" ] && [ -d "src/pages" ] && [ -d "src/data" ] && [ -d "src/types" ]; then
+if [ -d "frontend/components/ui" ] && [ -d "frontend/pages" ] && [ -d "frontend/data" ] && [ -d "frontend/types" ]; then
     echo "   ✓ Structure des dossiers OK"
 else
     echo "   ✗ Structure des dossiers manquante"
@@ -15,7 +15,7 @@ echo ""
 echo "✅ 2. Vérification des composants UI..."
 components=("Button.tsx" "Card.tsx" "Badge.tsx" "Input.tsx" "Select.tsx" "Textarea.tsx" "StatCard.tsx" "Modal.tsx")
 for comp in "${components[@]}"; do
-    if [ -f "src/components/ui/$comp" ]; then
+    if [ -f "frontend/components/ui/$comp" ]; then
         echo "   ✓ $comp"
     else
         echo "   ✗ $comp manquant"
@@ -35,7 +35,7 @@ done
 
 echo ""
 echo "✅ 4. Vérification des données mockées..."
-if [ -f "src/data/mockData.ts" ] && [ -f "src/types/index.ts" ]; then
+if [ -f "frontend/data/mockData.ts" ] && [ -f "frontend/types/index.ts" ]; then
     echo "   ✓ Données mockées et types OK"
 else
     echo "   ✗ Données ou types manquants"

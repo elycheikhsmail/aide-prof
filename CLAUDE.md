@@ -54,7 +54,7 @@ bun install
 
 **Démarrer PostgreSQL avec Docker:**
 ```bash
-docker-compose up -d
+docker compose up -d
 # Démarre PostgreSQL sur localhost:5432
 # User: aideprof, Password: aideprof_secret, DB: aideprof
 ```
