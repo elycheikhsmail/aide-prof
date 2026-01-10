@@ -1,0 +1,45 @@
+{
+  "id": "eval-arabic-001",
+  "title": "امتحان الرياضيات - الجبر",
+  "subject": "الرياضيات",
+  "date": "2025-01-15",
+  "duration": 60,
+  "totalPoints": 20,
+  "professorId": "prof-001",
+  "classIds": ["class-001"],
+  "status": "active",
+  "questions": [
+    {
+      "id": "q1",
+      "number": 1,
+      "statement": "حل المعادلة التالية: 2س + 5 = 13",
+      "modelAnswer": "س = 4",
+      "points": 4,
+      "estimatedLines": 4
+    },
+    {
+      "id": "q2",
+      "number": 2,
+      "statement": "حلل العبارة التالية إلى عوامل: س² - 9",
+      "modelAnswer": "(س - 3)(س + 3)",
+      "points": 4,
+      "estimatedLines": 4
+    },
+    {
+      "id": "q3",
+      "number": 3,
+      "statement": "انشر وبسط العبارة: (2س + 3)(س - 1)",
+      "modelAnswer": "2س² + س - 3",
+      "points": 6,
+      "estimatedLines": 6
+    },
+    {
+      "id": "q4",
+      "number": 4,
+      "statement": "حل جملة المعادلات التالية:\n2س + ص = 7\nس - ص = 2",
+      "modelAnswer": "س = 3، ص = 1",
+      "points": 6,
+      "estimatedLines": 8
+    }
+  ]
+}

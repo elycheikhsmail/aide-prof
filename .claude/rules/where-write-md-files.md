@@ -1,0 +1,2 @@
+- write md files in ./CLAUDE_FILES folder
+- la language de comunication entre moi et claude est le francais 

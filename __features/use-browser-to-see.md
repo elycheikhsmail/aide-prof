@@ -1,0 +1,2 @@
+
+a chaque fois que tu implemente une fonctionalite qui a un aspet visuel, tu dois lancer le serveur de developpement et ouvrir le navigateur pour verifier que tout fonctionne correctement. est-ce que c'est possible ? 

@@ -1,0 +1,45 @@
+{
+  "id": "eval-test-001",
+  "title": "Contrôle de Mathématiques - Algèbre",
+  "subject": "Mathématiques",
+  "date": "2025-01-15",
+  "duration": 60,
+  "totalPoints": 20,
+  "professorId": "prof-001",
+  "classIds": ["class-001"],
+  "status": "active",
+  "questions": [
+    {
+      "id": "q1",
+      "number": 1,
+      "statement": "Résoudre l'équation suivante : 2x + 5 = 13",
+      "modelAnswer": "x = 4",
+      "points": 3,
+      "estimatedLines": 3
+    },
+    {
+      "id": "q2",
+      "number": 2,
+      "statement": "Factoriser l'expression suivante : x² - 9",
+      "modelAnswer": "(x - 3)(x + 3)",
+      "points": 4,
+      "estimatedLines": 4
+    },
+    {
+      "id": "q3",
+      "number": 3,
+      "statement": "Développer et réduire l'expression : (2x + 3)(x - 1)",
+      "modelAnswer": "2x² + x - 3",
+      "points": 5,
+      "estimatedLines": 5
+    },
+    {
+      "id": "q4",
+      "number": 4,
+      "statement": "Résoudre le système d'équations suivant :\n2x + y = 7\nx - y = 2",
+      "modelAnswer": "x = 3, y = 1",
+      "points": 8,
+      "estimatedLines": 8
+    }
+  ]
+}

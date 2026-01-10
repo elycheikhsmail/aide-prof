@@ -1,0 +1,1 @@
+dans la page http://localhost:5173/login rendre facile copier email de test ely@gmail.com  via un botton qui a l'icon de copier (pendant le dev)
