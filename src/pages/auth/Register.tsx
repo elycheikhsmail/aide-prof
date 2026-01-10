@@ -1,39 +1,44 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { UserPlus, Eye, EyeOff } from 'lucide-react';
+import { UserPlus, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Button, Input, Select, Card } from '../../components/ui';
 
 export function Register() {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState<'prof' | 'eleve'>('eleve');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [error, setError] = useState('');
-  const { register } = useAuth();
+  const [localError, setLocalError] = useState('');
+  const { register, isLoading, error: authError, clearError } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    clearError();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setLocalError('');
+    clearError();
 
     if (password !== confirmPassword) {
-      setError('Les mots de passe ne correspondent pas');
+      setLocalError('Les mots de passe ne correspondent pas');
       return;
     }
 
     if (password.length < 4) {
-      setError('Le mot de passe doit contenir au moins 4 caractères');
+      setLocalError('Le mot de passe doit contenir au moins 4 caractères');
       return;
     }
 
-    const success = register(email, password, role);
-    if (success) {
+    const registerSuccess = await register(name, email, password, role);
+    
+    if (registerSuccess) {
       navigate('/');
-    } else {
-      setError('Erreur lors de l\'inscription');
     }
   };
 
@@ -50,12 +55,23 @@ export function Register() {
         <Card>
           <form onSubmit={handleSubmit} className="space-y-6 p-6">
             <Input
+              label="Nom complet"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Jean Dupont"
+              required
+              disabled={isLoading}
+            />
+
+            <Input
               label="Email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="exemple@email.com"
               required
+              disabled={isLoading}
             />
 
             <div className="relative">
@@ -66,11 +82,13 @@ export function Register() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
+                disabled={isLoading}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-9 text-gray-500 hover:text-gray-700"
+                disabled={isLoading}
               >
                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
@@ -84,11 +102,13 @@ export function Register() {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="••••••••"
                 required
+                disabled={isLoading}
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 className="absolute right-3 top-9 text-gray-500 hover:text-gray-700"
+                disabled={isLoading}
               >
                 {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
@@ -103,17 +123,22 @@ export function Register() {
                 { value: 'prof', label: 'Professeur' },
               ]}
               required
+              disabled={isLoading}
             />
 
-            {error && (
+            {(localError || authError) && (
               <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm">
-                {error}
+                {localError || authError}
               </div>
             )}
 
-            <Button type="submit" className="w-full">
-              <UserPlus className="w-4 h-4 mr-2" />
-              S'inscrire
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <UserPlus className="w-4 h-4 mr-2" />
+              )}
+              {isLoading ? 'Inscription...' : 'S\'inscrire'}
             </Button>
 
             <p className="text-center text-gray-600 text-sm">

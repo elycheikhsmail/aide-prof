@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FileText, Users, ClipboardCheck, TrendingUp, Plus, Upload } from 'lucide-react';
+import { FileText, Users, ClipboardCheck, TrendingUp, Plus, Upload, Loader2 } from 'lucide-react';
 import { Button, Card, Badge, Input, Select, StatCard, Modal } from '../../components/ui';
 import { ImportEvaluationModal } from '../../components/professor/ImportEvaluationModal';
 import { useEvaluations } from '../../contexts/EvaluationsContext';
@@ -7,7 +7,7 @@ import { mockStatistics, mockNotifications } from '../../data/mockData';
 import type { Evaluation } from '../../types';
 
 export function ProfessorDashboard() {
-  const { evaluations, addEvaluation } = useEvaluations();
+  const { evaluations, addEvaluation, isLoading, error } = useEvaluations();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -15,16 +15,41 @@ export function ProfessorDashboard() {
     subject: 'math',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
+    
+    await addEvaluation({
+      title: formData.title,
+      subject: formData.subject,
+      date: new Date().toISOString(),
+      duration: 60, // Default duration
+      totalPoints: 20, // Default total points
+    });
+    
     setIsModalOpen(false);
+    setFormData({ title: '', subject: 'math' });
   };
 
-  const handleImportEvaluation = (evaluation: Evaluation) => {
-    addEvaluation(evaluation);
+  const handleImportEvaluation = async (evaluation: Evaluation) => {
+    // Note: This might need adjustment depending on how import works with the backend
+    // For now assuming we just create a new evaluation from the imported data
+    await addEvaluation({
+      title: evaluation.title,
+      subject: evaluation.subject,
+      date: evaluation.date,
+      duration: evaluation.duration,
+      totalPoints: evaluation.totalPoints,
+    });
     setIsImportModalOpen(false);
   };
+
+  if (isLoading && evaluations.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
 
   return (
     <>
@@ -56,12 +81,18 @@ export function ProfessorDashboard() {
         </div>
       </div>
 
+      {error && (
+        <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm mb-6">
+          {error}
+        </div>
+      )}
+
       {/* Cartes de statistiques */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard
           data-testid="stat-total-evaluations"
           title="Total Évaluations"
-          value={mockStatistics.totalEvaluations}
+          value={evaluations.length}
           icon={FileText}
           trend={{ value: 8.5, isPositive: true }}
         />
@@ -118,45 +149,53 @@ export function ProfessorDashboard() {
               </tr>
             </thead>
             <tbody data-testid="evaluations-table-body" className="divide-y divide-gray-200">
-              {evaluations.slice(0, 5).map((evaluation) => (
-                <tr key={evaluation.id} data-testid={`evaluation-row-${evaluation.id}`} className="hover:bg-gray-50">
-                  <td className="px-4 py-4 text-sm font-medium text-gray-900">
-                    {evaluation.title}
-                  </td>
-                  <td className="px-4 py-4 text-sm text-gray-600">
-                    {evaluation.subject}
-                  </td>
-                  <td className="px-4 py-4 text-sm text-gray-600">
-                    {new Date(evaluation.date).toLocaleDateString('fr-FR')}
-                  </td>
-                  <td className="px-4 py-4">
-                    <Badge
-                      variant={
-                        evaluation.status === 'completed'
-                          ? 'success'
-                          : evaluation.status === 'correcting'
-                          ? 'warning'
-                          : evaluation.status === 'active'
-                          ? 'info'
-                          : 'neutral'
-                      }
-                    >
-                      {evaluation.status === 'completed'
-                        ? 'Terminé'
-                        : evaluation.status === 'correcting'
-                        ? 'Correction'
-                        : evaluation.status === 'active'
-                        ? 'Actif'
-                        : 'Brouillon'}
-                    </Badge>
-                  </td>
-                  <td className="px-4 py-4">
-                    <Button variant="ghost" size="sm">
-                      Voir détails
-                    </Button>
+              {evaluations.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                    Aucune évaluation trouvée
                   </td>
                 </tr>
-              ))}
+              ) : (
+                evaluations.slice(0, 5).map((evaluation) => (
+                  <tr key={evaluation.id} data-testid={`evaluation-row-${evaluation.id}`} className="hover:bg-gray-50">
+                    <td className="px-4 py-4 text-sm font-medium text-gray-900">
+                      {evaluation.title}
+                    </td>
+                    <td className="px-4 py-4 text-sm text-gray-600">
+                      {evaluation.subject}
+                    </td>
+                    <td className="px-4 py-4 text-sm text-gray-600">
+                      {new Date(evaluation.date).toLocaleDateString('fr-FR')}
+                    </td>
+                    <td className="px-4 py-4">
+                      <Badge
+                        variant={
+                          evaluation.status === 'completed'
+                            ? 'success'
+                            : evaluation.status === 'correcting'
+                            ? 'warning'
+                            : evaluation.status === 'active'
+                            ? 'info'
+                            : 'neutral'
+                        }
+                      >
+                        {evaluation.status === 'completed'
+                          ? 'Terminé'
+                          : evaluation.status === 'correcting'
+                          ? 'Correction'
+                          : evaluation.status === 'active'
+                          ? 'Actif'
+                          : 'Brouillon'}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-4">
+                      <Button variant="ghost" size="sm">
+                        Voir détails
+                      </Button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -202,11 +241,11 @@ export function ProfessorDashboard() {
         title="Créer une nouvelle évaluation"
         footer={
           <>
-            <Button variant="ghost" onClick={() => setIsModalOpen(false)}>
+            <Button variant="ghost" onClick={() => setIsModalOpen(false)} disabled={isLoading}>
               Annuler
             </Button>
-            <Button variant="primary" onClick={handleSubmit}>
-              Créer
+            <Button variant="primary" onClick={handleSubmit} disabled={isLoading}>
+              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Créer'}
             </Button>
           </>
         }
@@ -218,6 +257,7 @@ export function ProfessorDashboard() {
             placeholder="Ex: Contrôle Mathématiques"
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            disabled={isLoading}
           />
           <Select
             data-testid="evaluation-subject-select"
@@ -229,6 +269,7 @@ export function ProfessorDashboard() {
             ]}
             value={formData.subject}
             onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+            disabled={isLoading}
           />
         </form>
       </Modal>
