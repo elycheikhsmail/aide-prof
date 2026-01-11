@@ -66,11 +66,19 @@ export default defineConfig({
     // },
   ],
 
-  // Serveur web de développement
-  webServer: {
-    command: 'bun run dev',
-    url: 'http://localhost:5173',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
-  },
+  // Serveur web de développement (Frontend + Backend)
+  webServer: [
+    {
+      command: 'VITE_API_URL=http://localhost:3001/api/v1 bun run dev:frontend',
+      url: 'http://localhost:5173',
+      reuseExistingServer: !process.env.CI,
+      timeout: 120 * 1000,
+    },
+    {
+      command: 'cd server && NODE_ENV=test bun run dev:test',
+      url: 'http://localhost:3001/health',
+      reuseExistingServer: !process.env.CI,
+      timeout: 120 * 1000,
+    },
+  ],
 });
