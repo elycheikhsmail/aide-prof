@@ -40,7 +40,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    setIsLoading(true);
     setError(null);
     try {
       const { user: apiUser } = await authApi.login(email, password);
@@ -53,13 +52,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setError('Une erreur est survenue lors de la connexion');
       }
       return false;
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const register = async (name: string, email: string, password: string, role: 'prof' | 'eleve'): Promise<boolean> => {
-    setIsLoading(true);
     setError(null);
     try {
       const { user: apiUser } = await authApi.register(name, email, password, mapFrontendRole(role));
@@ -72,8 +68,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setError('Une erreur est survenue lors de l\'inscription');
       }
       return false;
-    } finally {
-      setIsLoading(false);
     }
   };
 

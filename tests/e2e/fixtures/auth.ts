@@ -18,5 +18,5 @@ export async function loginAsProfessor(page: Page) {
   await page.waitForURL('/');
 
   // Vérifier que le dashboard est chargé
-  await page.getByText('Tableau de bord').waitFor();
+  await page.getByRole('heading', { name: 'Tableau de bord' }).waitFor();
 }

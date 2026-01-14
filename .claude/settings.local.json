@@ -10,7 +10,8 @@
       "Bash(git commit:*)",
       "Bash(bun run db:push)",
       "Bash(npx drizzle-kit:*)",
-      "Bash(docker ps:*)"
+      "Bash(docker ps:*)",
+      "Bash(bun run test:e2e)"
     ]
   },
   "enableAllProjectMcpServers": true,

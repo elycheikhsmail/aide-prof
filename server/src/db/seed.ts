@@ -6,6 +6,7 @@ import { evaluations } from './schema/evaluations.js';
 import { evaluationClasses } from './schema/evaluationClasses.js';
 import { questions } from './schema/questions.js';
 import { students } from './schema/students.js';
+import { subjects } from './schema/subjects.js';
 
 async function seed() {
   console.log('Seeding database...');
@@ -23,6 +24,22 @@ async function seed() {
       })
       .returning();
     console.log('Created professor:', professor!.email);
+
+    // Create subjects
+    const subjectsData = [
+      { code: 'math', label: 'Mathématiques' },
+      { code: 'physics', label: 'Physique' },
+      { code: 'chemistry', label: 'Chimie' },
+      { code: 'french', label: 'Français' },
+      { code: 'history-geo', label: 'Histoire-Géo' },
+      { code: 'english', label: 'Anglais' },
+      { code: 'spanish', label: 'Espagnol' },
+      { code: 'svt', label: 'SVT' },
+      { code: 'technology', label: 'Technologie' },
+    ];
+
+    await db.insert(subjects).values(subjectsData).onConflictDoNothing();
+    console.log('Created subjects');
 
     // Create classes
     const classesData = [

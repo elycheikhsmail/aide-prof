@@ -13,7 +13,8 @@ export function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [localError, setLocalError] = useState('');
-  const { register, isLoading, error: authError, clearError } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { register, error: authError, clearError } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -35,10 +36,15 @@ export function Register() {
       return;
     }
 
-    const registerSuccess = await register(name, email, password, role);
-    
-    if (registerSuccess) {
-      navigate('/');
+    setIsSubmitting(true);
+    try {
+      const registerSuccess = await register(name, email, password, role);
+
+      if (registerSuccess) {
+        navigate('/');
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -61,7 +67,7 @@ export function Register() {
               onChange={(e) => setName(e.target.value)}
               placeholder="Jean Dupont"
               required
-              disabled={isLoading}
+              disabled={isSubmitting}
             />
 
             <Input
@@ -71,7 +77,7 @@ export function Register() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="exemple@email.com"
               required
-              disabled={isLoading}
+              disabled={isSubmitting}
             />
 
             <div className="relative">
@@ -82,13 +88,13 @@ export function Register() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                disabled={isLoading}
+                disabled={isSubmitting}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-9 text-gray-500 hover:text-gray-700"
-                disabled={isLoading}
+                disabled={isSubmitting}
               >
                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
@@ -102,13 +108,13 @@ export function Register() {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                disabled={isLoading}
+                disabled={isSubmitting}
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 className="absolute right-3 top-9 text-gray-500 hover:text-gray-700"
-                disabled={isLoading}
+                disabled={isSubmitting}
               >
                 {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
@@ -123,7 +129,7 @@ export function Register() {
                 { value: 'prof', label: 'Professeur' },
               ]}
               required
-              disabled={isLoading}
+              disabled={isSubmitting}
             />
 
             {(localError || authError) && (
@@ -132,13 +138,13 @@ export function Register() {
               </div>
             )}
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? (
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               ) : (
                 <UserPlus className="w-4 h-4 mr-2" />
               )}
-              {isLoading ? 'Inscription...' : 'S\'inscrire'}
+              {isSubmitting ? 'Inscription...' : 'S\'inscrire'}
             </Button>
 
             <p className="text-center text-gray-600 text-sm">

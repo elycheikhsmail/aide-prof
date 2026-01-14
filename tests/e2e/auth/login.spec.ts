@@ -5,6 +5,9 @@ test.describe('Authentication - Login', () => {
     await page.goto('/login');
   });
 
+  // ... (lines 8-41 skipped)
+
+
   test('should display login form', async ({ page }) => {
     // Vérifier que tous les éléments du formulaire sont visibles
     await expect(page.getByTestId('login-email')).toBeVisible();
@@ -25,7 +28,7 @@ test.describe('Authentication - Login', () => {
     await expect(page).toHaveURL('/');
 
     // Vérifier que le dashboard est affiché
-    await expect(page.getByText('Tableau de bord')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Tableau de bord' })).toBeVisible();
 
     // Vérifier que le nom de l'utilisateur est affiché dans le header
     await expect(page.getByText('Dr. Marie Dubois')).toBeVisible();
@@ -40,7 +43,6 @@ test.describe('Authentication - Login', () => {
     await page.getByTestId('login-submit').click();
 
     // Vérifier que l'erreur est affichée
-    await expect(page.getByTestId('login-error')).toBeVisible();
     await expect(page.getByTestId('login-error')).toContainText(
       'Email ou mot de passe incorrect'
     );

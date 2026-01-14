@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Users, Pencil, Trash2, Loader2 } from 'lucide-react';
 import { Button, Card, Input, Modal, Select } from '../../components/ui';
 import { useClasses } from '../../contexts/ClassesContext';
+import { subjectsApi, type Subject } from '../../services/subjectsApi';
 import type { Class } from '../../types';
 
 export function Classes() {
@@ -10,8 +11,29 @@ export function Classes() {
   const [editingClass, setEditingClass] = useState<Class | null>(null);
   const [formData, setFormData] = useState({
     name: '',
-    subject: 'math',
+    subject: '',
   });
+
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [isLoadingSubjects, setIsLoadingSubjects] = useState(false);
+
+  useEffect(() => {
+    const loadSubjects = async () => {
+      try {
+        setIsLoadingSubjects(true);
+        const data = await subjectsApi.getAll();
+        setSubjects(data.subjects);
+        if (data.subjects.length > 0 && !formData.subject) {
+          setFormData(prev => ({ ...prev, subject: data.subjects[0].code }));
+        }
+      } catch (err) {
+        console.error('Failed to load subjects', err);
+      } finally {
+        setIsLoadingSubjects(false);
+      }
+    };
+    loadSubjects();
+  }, []);
 
   const handleOpenModal = (cls?: Class) => {
     if (cls) {
@@ -24,7 +46,7 @@ export function Classes() {
       setEditingClass(null);
       setFormData({
         name: '',
-        subject: 'math',
+        subject: subjects[0]?.code || '',
       });
     }
     setIsModalOpen(true);
@@ -32,13 +54,13 @@ export function Classes() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (editingClass) {
       await updateClass(editingClass.id, formData);
     } else {
       await addClass(formData);
     }
-    
+
     setIsModalOpen(false);
   };
 
@@ -48,7 +70,12 @@ export function Classes() {
     }
   };
 
-  if (isLoading && classes.length === 0) {
+  const getSubjectLabel = (code: string) => {
+    const subject = subjects.find(s => s.code === code);
+    return subject ? subject.label : code;
+  };
+
+  if ((isLoading || isLoadingSubjects) && classes.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
@@ -106,16 +133,14 @@ export function Classes() {
                       </button>
                     </div>
                   </div>
-                  
+
                   <h3 className="text-lg font-semibold text-gray-900 mb-1">
                     {cls.name}
                   </h3>
                   <p className="text-sm text-gray-500 mb-4">
-                    {cls.subject === 'math' ? 'Mathématiques' : 
-                     cls.subject === 'physics' ? 'Physique' : 
-                     cls.subject === 'chemistry' ? 'Chimie' : cls.subject}
+                    {getSubjectLabel(cls.subject)}
                   </p>
-                  
+
                   <div className="flex items-center text-sm text-gray-600">
                     <span className="font-medium mr-1">{cls.studentCount}</span>
                     étudiants inscrits
@@ -152,11 +177,7 @@ export function Classes() {
           />
           <Select
             label="Matière"
-            options={[
-              { value: 'math', label: 'Mathématiques' },
-              { value: 'physics', label: 'Physique' },
-              { value: 'chemistry', label: 'Chimie' },
-            ]}
+            options={subjects.map(s => ({ value: s.code, label: s.label }))}
             value={formData.subject}
             onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
             disabled={isLoading}

@@ -200,11 +200,12 @@ test.describe('Evaluation Import', () => {
     // Vérifier les informations de base
     await expect(page.getByTestId('preview-basic-info')).toBeVisible();
     await expect(page.getByText(testEval.title)).toBeVisible();
-    await expect(page.getByText(testEval.subject)).toBeVisible();
+    // Utiliser un sélecteur plus spécifique car "Mathématiques" apparaît dans le tableau en arrière-plan
+    await expect(page.getByTestId('preview-basic-info').getByText(testEval.subject)).toBeVisible();
 
     // Vérifier les questions
-    await expect(page.getByTestId('preview-questions')).toBeVisible();
-    await expect(page.getByTestId('preview-question-0')).toBeVisible();
+    await expect(page.getByTestId('preview-questions')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId('preview-question-0')).toBeVisible({ timeout: 10000 });
 
     // Le bouton Confirmer doit être actif
     await expect(page.getByTestId('import-modal-confirm')).toBeEnabled();

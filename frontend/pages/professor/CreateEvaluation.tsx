@@ -1,26 +1,33 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import { Button, Input, Select, Card } from '../../components/ui';
 import { ICEvaluationForm } from './evaluation-forms/ICEvaluationForm';
 import { MathsEvaluationForm } from './evaluation-forms/MathsEvaluationForm';
 import { AREvaluationForm } from './evaluation-forms/AREvaluationForm';
-
-type Discipline = 'ic' | 'maths' | 'ar' | '';
+import { subjectsApi, type Subject } from '../../services/subjectsApi';
+import { useClasses } from '../../contexts/ClassesContext';
 
 export function CreateEvaluation() {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
+  const { classes } = useClasses();
 
   // Étape 1: Informations générales
   const [title, setTitle] = useState('');
-  const [discipline, setDiscipline] = useState<Discipline>('');
+  const [discipline, setDiscipline] = useState('');
   const [classId, setClassId] = useState('');
   const [date, setDate] = useState('');
   const [duration, setDuration] = useState('');
 
   // Données spécifiques à chaque matière
   const [evaluationData, setEvaluationData] = useState<any>(null);
+
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+
+  useEffect(() => {
+    subjectsApi.getAll().then(data => setSubjects(data.subjects)).catch(console.error);
+  }, []);
 
   const steps = [
     { id: 1, label: 'Informations générales' },
@@ -55,6 +62,23 @@ export function CreateEvaluation() {
 
   const canProceedStep1 = title && discipline && classId && date && duration;
 
+  // Helper to determine which form to show based on subject code
+  const getEvaluationForm = () => {
+    // Map subject codes to specific forms if they exist
+    // Note: In a real app, this mapping might be driven by subject metadata (e.g., subject.type)
+    if (discipline === 'math' || discipline === 'maths') return <MathsEvaluationForm data={evaluationData} onChange={setEvaluationData} />;
+    if (discipline === 'ic') return <ICEvaluationForm data={evaluationData} onChange={setEvaluationData} />;
+    if (discipline === 'ar') return <AREvaluationForm data={evaluationData} onChange={setEvaluationData} />;
+
+    // Fallback for other subjects - using Maths form as generic or just a placeholder message
+    return (
+      <div className="p-4 bg-yellow-50 text-yellow-800 rounded-lg">
+        Formulaire générique non implémenté pour cette matière. Utilisation du format standard.
+        <MathsEvaluationForm data={evaluationData} onChange={setEvaluationData} />
+      </div>
+    );
+  };
+
   return (
     <div className="max-w-5xl mx-auto">
       <div className="mb-8">
@@ -75,29 +99,26 @@ export function CreateEvaluation() {
             <div key={step.id} className="flex items-center flex-1">
               <div className="flex items-center">
                 <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
-                    currentStep > step.id
+                  className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${currentStep > step.id
                       ? 'bg-green-500 text-white'
                       : currentStep === step.id
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-200 text-gray-600'
-                  }`}
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-200 text-gray-600'
+                    }`}
                 >
                   {currentStep > step.id ? <Check className="w-5 h-5" /> : step.id}
                 </div>
                 <span
-                  className={`ml-3 font-medium ${
-                    currentStep >= step.id ? 'text-gray-900' : 'text-gray-500'
-                  }`}
+                  className={`ml-3 font-medium ${currentStep >= step.id ? 'text-gray-900' : 'text-gray-500'
+                    }`}
                 >
                   {step.label}
                 </span>
               </div>
               {index < steps.length - 1 && (
                 <div
-                  className={`flex-1 h-1 mx-4 ${
-                    currentStep > step.id ? 'bg-green-500' : 'bg-gray-200'
-                  }`}
+                  className={`flex-1 h-1 mx-4 ${currentStep > step.id ? 'bg-green-500' : 'bg-gray-200'
+                    }`}
                 />
               )}
             </div>
@@ -126,12 +147,10 @@ export function CreateEvaluation() {
               <Select
                 label="Discipline"
                 value={discipline}
-                onChange={(e) => setDiscipline(e.target.value as Discipline)}
+                onChange={(e) => setDiscipline(e.target.value)}
                 options={[
                   { value: '', label: 'Sélectionnez une discipline' },
-                  { value: 'ic', label: 'Informatique (IC)' },
-                  { value: 'maths', label: 'Mathématiques' },
-                  { value: 'ar', label: 'Arabe' },
+                  ...subjects.map(s => ({ value: s.code, label: s.label }))
                 ]}
                 required
               />
@@ -142,9 +161,7 @@ export function CreateEvaluation() {
                 onChange={(e) => setClassId(e.target.value)}
                 options={[
                   { value: '', label: 'Sélectionnez une classe' },
-                  { value: '1', label: 'Terminale S1 - Mathématiques' },
-                  { value: '2', label: 'Première S - Physique' },
-                  { value: '3', label: '3ème A - Chimie' },
+                  ...classes.map(c => ({ value: c.id, label: c.name }))
                 ]}
                 required
               />
@@ -171,13 +188,14 @@ export function CreateEvaluation() {
               {discipline && (
                 <div className="mt-6 p-4 bg-blue-50 rounded-lg">
                   <h3 className="font-semibold text-blue-900 mb-2">
-                    Format de l'évaluation pour {discipline.toUpperCase()}:
+                    Format de l'évaluation :
                   </h3>
                   <p className="text-blue-700 text-sm">
                     {discipline === 'ic' && 'Suite de questions simples (Q1, Q2, Q3, ...)'}
-                    {discipline === 'maths' &&
+                    {(discipline === 'math' || discipline === 'maths') &&
                       'Suite d\'exercices, chaque exercice contient plusieurs questions avec contexte optionnel'}
                     {discipline === 'ar' && 'Texte global suivi d\'une série de questions'}
+                    {!['ic', 'math', 'maths', 'ar'].includes(discipline) && 'Format standard avec exercices et questions'}
                   </p>
                 </div>
               )}
@@ -187,24 +205,7 @@ export function CreateEvaluation() {
           {/* Étape 2: Contenu selon la discipline */}
           {currentStep === 2 && (
             <div>
-              {discipline === 'ic' && (
-                <ICEvaluationForm
-                  data={evaluationData}
-                  onChange={setEvaluationData}
-                />
-              )}
-              {discipline === 'maths' && (
-                <MathsEvaluationForm
-                  data={evaluationData}
-                  onChange={setEvaluationData}
-                />
-              )}
-              {discipline === 'ar' && (
-                <AREvaluationForm
-                  data={evaluationData}
-                  onChange={setEvaluationData}
-                />
-              )}
+              {getEvaluationForm()}
             </div>
           )}
 
