@@ -11,6 +11,35 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Development Commands
 
+### ⚠️ Ordre de Démarrage Important
+
+**Docker DOIT être lancé AVANT le serveur de développement**, sinon vous obtiendrez l'erreur:
+```
+connect ECONNREFUSED 127.0.0.1:5432
+```
+
+**Démarrage complet (première fois):**
+```bash
+# 1. Installer les dépendances
+bun install
+cd server && bun install && cd ..
+
+# 2. Démarrer PostgreSQL (OBLIGATOIRE)
+docker compose up -d
+
+# 3. Initialiser la base de données
+cd server && bun run db:push && bun run db:seed && cd ..
+
+# 4. Lancer l'application
+bun dev
+```
+
+**Démarrage quotidien:**
+```bash
+docker compose up -d  # Toujours en premier !
+bun dev
+```
+
 ### Frontend (racine du projet)
 
 **First-time setup:**
@@ -21,7 +50,7 @@ bun install
 **Development server:**
 ```bash
 bun dev
-# Démarre sur http://localhost:5173
+# Démarre sur http://localhost:5173 (frontend) + http://localhost:3000 (backend)
 ```
 
 **Build for production:**

@@ -1,5 +1,5 @@
 import { config } from '../config/env';
-
+console.log('API URL:', config.apiUrl);
 // Types for API responses
 export interface ApiUser {
   id: string;

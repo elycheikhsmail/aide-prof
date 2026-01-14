@@ -11,7 +11,8 @@
       "Bash(bun run db:push)",
       "Bash(npx drizzle-kit:*)",
       "Bash(docker ps:*)",
-      "Bash(bun run test:e2e)"
+      "Bash(bun run test:e2e)",
+      "Bash(bun run db:seed:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

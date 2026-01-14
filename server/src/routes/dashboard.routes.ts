@@ -40,9 +40,9 @@ router.get('/stats', async (c) => {
         const averageSuccessRate = 72.5;
 
         return c.json({
-            totalEvaluations: evaluationsCount.count,
-            activeClasses: classesCount.count,
-            copiesToCorrect: correctionCount.count,
+            totalEvaluations: evaluationsCount?.count ?? 0,
+            activeClasses: classesCount?.count ?? 0,
+            copiesToCorrect: correctionCount?.count ?? 0,
             averageSuccessRate: averageSuccessRate,
         });
     } catch (error) {

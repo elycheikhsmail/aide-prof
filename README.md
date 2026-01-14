@@ -4,15 +4,31 @@ Application web d'assistant d'évaluation permettant aux professeurs de créer d
 
 ## 🚀 Démarrage Rapide
 
-```bash
-# Installer les dépendances
-bun install
+### Prérequis
+- [Bun](https://bun.sh/) - Package manager
+- [Docker](https://www.docker.com/) - Pour la base de données PostgreSQL
 
-# Lancer le serveur de développement
+### Installation et démarrage
+
+```bash
+# 1. Installer les dépendances (frontend + backend)
+bun install
+cd server && bun install && cd ..
+
+# 2. Démarrer PostgreSQL avec Docker (OBLIGATOIRE)
+docker compose up -d
+
+# 3. Initialiser la base de données
+cd server && bun run db:push && bun run db:seed && cd ..
+
+# 4. Lancer l'application (frontend + backend)
 bun dev
 
-# Ouvrir http://localhost:5173
+# Frontend: http://localhost:5173
+# Backend API: http://localhost:3000/api/v1
 ```
+
+> ⚠️ **Important:** Docker doit être lancé AVANT de démarrer l'application, sinon vous obtiendrez l'erreur `ECONNREFUSED 127.0.0.1:5432`
 
 ## 🛠️ Stack Technique
 
