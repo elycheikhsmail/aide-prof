@@ -110,14 +110,37 @@ bun run db:seed      # Insère les données de test
 
 ### Tests E2E (Playwright)
 
-Le projet utilise **Playwright** pour les tests end-to-end.
+Le projet utilise **Playwright** pour les tests end-to-end avec un **script de démarrage intelligent** (`scripts/test-e2e-start.ts`).
+
+**Lancer les tests (une seule commande !) :**
+```bash
+bun run test:e2e
+```
+
+**Le script `bun run test:e2e` fait automatiquement :**
+1. Démarre PostgreSQL (test) via Docker si pas déjà lancé
+2. Attend que PostgreSQL soit prêt
+3. Push le schéma Drizzle si les tables n'existent pas
+4. Seed la base de données test
+5. Lance les tests E2E avec Playwright
+
+**Plus besoin de setup manuel !**
 
 **Commandes disponibles:**
 ```bash
 bun run test:e2e         # Lance tous les tests E2E
 bun run test:e2e:ui      # Lance les tests avec interface graphique
 bun run test:e2e:debug   # Lance les tests en mode debug
+bun run test:e2e:headed  # Lance les tests en mode visible (avec navigateur)
 bun run test:e2e:report  # Affiche le rapport des tests
+bun run test:e2e:cleanup # Arrête le container PostgreSQL test
+```
+
+**Filtrer les tests :**
+```bash
+bun run test:e2e -- --grep "login"           # Tests contenant "login"
+bun run test:e2e -- --project=chromium       # Uniquement sur Chromium
+bun run test:e2e -- tests/e2e/auth/          # Uniquement les tests d'auth
 ```
 
 **Structure des tests:**
@@ -277,7 +300,8 @@ tests/
 **Scripts (`/scripts`):**
 ```
 scripts/
-└── dev-start.ts         # Script de démarrage intelligent
+├── dev-start.ts         # Script de démarrage intelligent (développement)
+└── test-e2e-start.ts    # Script de démarrage intelligent (tests E2E)
 ```
 
 ### Architecture de Navigation
