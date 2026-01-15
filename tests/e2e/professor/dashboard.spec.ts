@@ -7,8 +7,8 @@ test.describe('Professor Dashboard', () => {
   });
 
   test('should display dashboard title and subtitle', async ({ page }) => {
-    await expect(page.getByRole('heading', { name: 'Tableau de bord' })).toBeVisible();
-    await expect(page.getByText("Vue d'ensemble de vos évaluations")).toBeVisible();
+    await expect(page.getByTestId('dashboard-title')).toBeVisible();
+    await expect(page.getByTestId('dashboard-subtitle')).toBeVisible();
   });
 
   test('should display all statistics cards', async ({ page }) => {
@@ -19,10 +19,10 @@ test.describe('Professor Dashboard', () => {
     await expect(page.getByTestId('stat-taux-de-reussite')).toBeVisible();
 
     // Vérifier les titres des cartes
-    await expect(page.getByText('Total Évaluations')).toBeVisible();
-    await expect(page.getByText('Classes Actives')).toBeVisible();
-    await expect(page.getByText('Copies à Corriger')).toBeVisible();
-    await expect(page.getByText('Taux de Réussite')).toBeVisible();
+    await expect(page.getByTestId('stat-total-evaluations')).toContainText('Total Évaluations');
+    await expect(page.getByTestId('stat-classes-actives')).toContainText('Classes Actives');
+    await expect(page.getByTestId('stat-copies-a-corriger')).toContainText('Copies à Corriger');
+    await expect(page.getByTestId('stat-taux-de-reussite')).toContainText('Taux de Réussite');
 
     // Vérifier que les valeurs sont affichées (au moins les valeurs du seed)
     // Note: D'autres tests peuvent créer des évaluations, donc on vérifie que le nombre est >= attendu
@@ -46,22 +46,21 @@ test.describe('Professor Dashboard', () => {
     expect(count).toBeGreaterThanOrEqual(2);
 
     // Vérifier que les en-têtes sont présents
-    await expect(page.getByRole('columnheader', { name: 'Titre' })).toBeVisible();
-    await expect(page.getByRole('columnheader', { name: 'Matière' })).toBeVisible();
-    await expect(page.getByRole('columnheader', { name: 'Date' })).toBeVisible();
-    await expect(page.getByRole('columnheader', { name: 'Statut' })).toBeVisible();
-    await expect(page.getByRole('columnheader', { name: 'Actions' })).toBeVisible();
+    await expect(page.getByTestId('column-header-title')).toBeVisible();
+    await expect(page.getByTestId('column-header-subject')).toBeVisible();
+    await expect(page.getByTestId('column-header-date')).toBeVisible();
+    await expect(page.getByTestId('column-header-status')).toBeVisible();
+    await expect(page.getByTestId('column-header-actions')).toBeVisible();
   });
 
   test('should display evaluation status badges', async ({ page }) => {
     const tableBody = page.getByTestId('evaluations-table-body');
 
     // Vérifier que les badges de statut sont affichés dans le tableau
-    // Vérifier que les badges de statut sont affichés dans le tableau
-    await expect(tableBody.getByText('Terminé')).toBeVisible();
-    await expect(tableBody.getByText('Correction')).toBeVisible();
+    await expect(tableBody.locator('[data-testid="status-badge-completed"]')).toBeVisible();
+    await expect(tableBody.locator('[data-testid="status-badge-correcting"]')).toBeVisible();
     // 'Actif' n'est pas dans le seed data
-    // await expect(tableBody.getByText('Actif')).toBeVisible();
+    // await expect(tableBody.locator('[data-testid="status-badge-active"]')).toBeVisible();
   });
 
   test('should display notifications', async ({ page }) => {
@@ -76,7 +75,7 @@ test.describe('Professor Dashboard', () => {
     expect(count).toBeGreaterThan(0);
 
     // Vérifier le titre de la section
-    await expect(page.getByText('Notifications')).toBeVisible();
+    await expect(page.getByTestId('notifications-title')).toBeVisible();
   });
 
   test('should open create evaluation modal', async ({ page }) => {
@@ -106,7 +105,7 @@ test.describe('Professor Dashboard', () => {
     await page.getByTestId('evaluation-subject-select').selectOption('physics');
 
     // Soumettre le formulaire
-    await page.getByTestId('modal-footer').getByRole('button', { name: 'Créer' }).click();
+    await page.getByTestId('create-modal-submit').click();
 
     // Vérifier que le modal se ferme
     await expect(page.getByTestId('modal-overlay')).not.toBeVisible();
@@ -120,7 +119,7 @@ test.describe('Professor Dashboard', () => {
     await expect(page.getByTestId('modal-overlay')).toBeVisible();
 
     // Cliquer sur Annuler
-    await page.getByTestId('modal-footer').getByRole('button', { name: 'Annuler' }).click();
+    await page.getByTestId('create-modal-cancel').click();
 
     // Vérifier que le modal est fermé
     await expect(page.getByTestId('modal-overlay')).not.toBeVisible();

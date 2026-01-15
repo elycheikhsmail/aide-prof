@@ -28,10 +28,10 @@ test.describe('Authentication - Login', () => {
     await expect(page).toHaveURL('/');
 
     // Vérifier que le dashboard est affiché
-    await expect(page.getByRole('heading', { name: 'Tableau de bord' })).toBeVisible();
+    await expect(page.getByTestId('dashboard-title')).toBeVisible();
 
     // Vérifier que le nom de l'utilisateur est affiché dans le header
-    await expect(page.getByText('Dr. Marie Dubois')).toBeVisible();
+    await expect(page.getByTestId('header-username')).toBeVisible();
   });
 
   test('should show error with invalid credentials', async ({ page }) => {
@@ -73,7 +73,7 @@ test.describe('Authentication - Login', () => {
 
   test('should navigate to register page', async ({ page }) => {
     // Cliquer sur le lien "S'inscrire"
-    await page.getByRole('link', { name: "S'inscrire" }).click();
+    await page.getByTestId('register-link').click();
 
     // Vérifier la navigation vers /register
     await expect(page).toHaveURL('/register');

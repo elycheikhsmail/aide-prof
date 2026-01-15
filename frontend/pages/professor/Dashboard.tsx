@@ -102,8 +102,8 @@ export function ProfessorDashboard() {
       {/* Titre et boutons CTA */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="text-3xl font-bold text-gray-900">Tableau de bord</h2>
-          <p className="text-gray-600 mt-1">Vue d'ensemble de vos évaluations</p>
+          <h2 data-testid="dashboard-title" className="text-3xl font-bold text-gray-900">Tableau de bord</h2>
+          <p data-testid="dashboard-subtitle" className="text-gray-600 mt-1">Vue d'ensemble de vos évaluations</p>
         </div>
         <div className="flex space-x-3">
           <Button
@@ -179,19 +179,19 @@ export function ProfessorDashboard() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead>
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th data-testid="column-header-title" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Titre
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th data-testid="column-header-subject" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Matière
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th data-testid="column-header-date" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Date
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th data-testid="column-header-status" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Statut
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th data-testid="column-header-actions" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Actions
                 </th>
               </tr>
@@ -217,6 +217,7 @@ export function ProfessorDashboard() {
                     </td>
                     <td className="px-4 py-4">
                       <Badge
+                        data-testid={`status-badge-${evaluation.status}`}
                         variant={
                           evaluation.status === 'completed'
                             ? 'success'
@@ -252,7 +253,7 @@ export function ProfessorDashboard() {
       {/* Notifications */}
       <Card
         header={
-          <h3 className="text-lg font-semibold text-gray-900">
+          <h3 data-testid="notifications-title" className="text-lg font-semibold text-gray-900">
             Notifications
           </h3>
         }
@@ -292,10 +293,10 @@ export function ProfessorDashboard() {
         title="Créer une nouvelle évaluation"
         footer={
           <>
-            <Button variant="ghost" onClick={() => setIsModalOpen(false)} disabled={isEvaluationsLoading || isLoadingData}>
+            <Button data-testid="create-modal-cancel" variant="ghost" onClick={() => setIsModalOpen(false)} disabled={isEvaluationsLoading || isLoadingData}>
               Annuler
             </Button>
-            <Button variant="primary" onClick={handleSubmit} disabled={isEvaluationsLoading || isLoadingData}>
+            <Button data-testid="create-modal-submit" variant="primary" onClick={handleSubmit} disabled={isEvaluationsLoading || isLoadingData}>
               {isEvaluationsLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Créer'}
             </Button>
           </>

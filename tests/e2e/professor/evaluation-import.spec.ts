@@ -16,8 +16,9 @@ test.describe('Evaluation Import', () => {
 
   test('should display import button on dashboard', async ({ page }) => {
     // Vérifier que le bouton d'import est visible
-    await expect(page.getByTestId('import-evaluation-button')).toBeVisible();
-    await expect(page.getByText('Importer JSON')).toBeVisible();
+    const importButton = page.getByTestId('import-evaluation-button');
+    await expect(importButton).toBeVisible();
+    await expect(importButton).toContainText('Importer JSON');
   });
 
   test('should open import modal when clicking import button', async ({ page }) => {
@@ -108,10 +109,11 @@ test.describe('Evaluation Import', () => {
     await page.getByTestId('import-modal-next').click();
 
     // Vérifier que l'aperçu montre des erreurs
-    await expect(page.getByTestId('validation-errors')).toBeVisible();
+    const errorsContainer = page.getByTestId('validation-errors');
+    await expect(errorsContainer).toBeVisible();
 
     // Vérifier qu'il y a au moins une erreur concernant le titre manquant
-    await expect(page.getByText(/titre/i)).toBeVisible();
+    await expect(errorsContainer).toContainText(/title/i);
 
     // Le bouton Confirmer doit être désactivé
     await expect(page.getByTestId('import-modal-confirm')).toBeDisabled();
@@ -133,8 +135,9 @@ test.describe('Evaluation Import', () => {
     await page.getByTestId('import-modal-next').click();
 
     // Vérifier que l'aperçu montre une erreur d'incohérence
-    await expect(page.getByTestId('validation-errors')).toBeVisible();
-    await expect(page.getByText(/incohérence/i)).toBeVisible();
+    const errorsContainer = page.getByTestId('validation-errors');
+    await expect(errorsContainer).toBeVisible();
+    await expect(errorsContainer).toContainText(/incohérence/i);
 
     // Le bouton Confirmer doit être désactivé
     await expect(page.getByTestId('import-modal-confirm')).toBeDisabled();
@@ -198,10 +201,10 @@ test.describe('Evaluation Import', () => {
     await expect(page.getByTestId('evaluation-preview')).toBeVisible();
 
     // Vérifier les informations de base
-    await expect(page.getByTestId('preview-basic-info')).toBeVisible();
-    await expect(page.getByText(testEval.title)).toBeVisible();
-    // Utiliser un sélecteur plus spécifique car "Mathématiques" apparaît dans le tableau en arrière-plan
-    await expect(page.getByTestId('preview-basic-info').getByText(testEval.subject)).toBeVisible();
+    const basicInfo = page.getByTestId('preview-basic-info');
+    await expect(basicInfo).toBeVisible();
+    await expect(basicInfo).toContainText(testEval.title);
+    await expect(basicInfo).toContainText(testEval.subject);
 
     // Vérifier les questions
     await expect(page.getByTestId('preview-questions')).toBeVisible({ timeout: 10000 });

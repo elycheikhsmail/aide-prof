@@ -1,0 +1,3 @@
+Pour garantir la fiabilité et la stabilité des tests end-to-end, ceux-ci ne doivent pas dépendre du contenu textuel des éléments (boutons, champs, liens, etc.).
+Les éléments à sélectionner doivent être identifiés à l’aide d’un identifiant stable (id, data-testid) ou, si nécessaire, par un indice de position.
+La sélection par contenu textuel n’est autorisée que lorsqu’aucune autre solution technique n’est possible.

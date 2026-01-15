@@ -26,7 +26,7 @@ export function Header({ userName, userPhoto, onLogout }: HeaderProps) {
                 className="w-10 h-10 rounded-full"
               />
             )}
-            <span className="text-gray-700 font-medium">{userName}</span>
+            <span data-testid="header-username" className="text-gray-700 font-medium">{userName}</span>
             <Button data-testid="logout-button" variant="ghost" size="sm" onClick={onLogout}>
               <LogOut className="w-4 h-4 mr-2" />
               Déconnexion

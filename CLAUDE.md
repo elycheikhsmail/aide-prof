@@ -11,34 +11,27 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Development Commands
 
-### ⚠️ Ordre de Démarrage Important
+### Démarrage Simplifié avec `bun dev`
 
-**Docker DOIT être lancé AVANT le serveur de développement**, sinon vous obtiendrez l'erreur:
-```
-connect ECONNREFUSED 127.0.0.1:5432
-```
+Le projet utilise un **script de démarrage intelligent** (`scripts/dev-start.ts`) qui gère automatiquement toute la configuration :
 
-**Démarrage complet (première fois):**
 ```bash
-# 1. Installer les dépendances
+# Première fois : installer les dépendances
 bun install
 cd server && bun install && cd ..
 
-# 2. Démarrer PostgreSQL (OBLIGATOIRE)
-docker compose up -d
-
-# 3. Initialiser la base de données
-cd server && bun run db:push && bun run db:seed && cd ..
-
-# 4. Lancer l'application
+# Démarrage (une seule commande !)
 bun dev
 ```
 
-**Démarrage quotidien:**
-```bash
-docker compose up -d  # Toujours en premier !
-bun dev
-```
+**Le script `bun dev` fait automatiquement :**
+1. Démarre PostgreSQL via Docker si pas déjà lancé
+2. Attend que PostgreSQL soit prêt
+3. Push le schéma Drizzle si les tables n'existent pas
+4. Seed la base de données si pas de données
+5. Lance le backend (http://localhost:3000) et le frontend (http://localhost:5173) en parallèle
+
+**Plus besoin de lancer Docker manuellement !**
 
 ### Frontend (racine du projet)
 
@@ -81,14 +74,16 @@ cd server
 bun install
 ```
 
-**Démarrer PostgreSQL avec Docker:**
+**Note:** En développement normal, utilisez `bun dev` depuis la racine du projet. Cette commande démarre automatiquement PostgreSQL et le backend.
+
+**Démarrer PostgreSQL manuellement (si nécessaire):**
 ```bash
-docker compose up -d
+docker compose up -d postgres
 # Démarre PostgreSQL sur localhost:5432
 # User: aideprof, Password: aideprof_secret, DB: aideprof
 ```
 
-**Development server:**
+**Development server (backend seul):**
 ```bash
 cd server
 bun dev
@@ -112,6 +107,33 @@ bun run db:push      # Push direct vers la DB (dev)
 bun run db:studio    # Interface web Drizzle Studio
 bun run db:seed      # Insère les données de test
 ```
+
+### Tests E2E (Playwright)
+
+Le projet utilise **Playwright** pour les tests end-to-end.
+
+**Commandes disponibles:**
+```bash
+bun run test:e2e         # Lance tous les tests E2E
+bun run test:e2e:ui      # Lance les tests avec interface graphique
+bun run test:e2e:debug   # Lance les tests en mode debug
+bun run test:e2e:report  # Affiche le rapport des tests
+```
+
+**Structure des tests:**
+```
+tests/e2e/
+├── auth/
+│   ├── login.spec.ts     # Tests de connexion
+│   └── logout.spec.ts    # Tests de déconnexion
+├── professor/
+│   ├── dashboard.spec.ts        # Tests du tableau de bord
+│   └── evaluation-import.spec.ts # Tests d'import d'évaluations
+└── navigation/
+    └── sidebar.spec.ts   # Tests de navigation
+```
+
+**Règle importante:** Les tests E2E doivent utiliser des `data-testid` pour identifier les éléments (voir `.claude/rules/test-e2e-with-test-id.md`).
 
 ## Git Workflow et Convention de Branches
 
@@ -174,6 +196,26 @@ feature/short-name-of-the-feature
 
 **Dépôt GitHub:** https://github.com/elycheikhsmail/aide-prof
 
+## Règles Claude Code
+
+Le projet contient des règles spécifiques pour Claude Code dans `.claude/rules/` :
+
+| Fichier | Description |
+|---------|-------------|
+| `git-workflow.md` | Convention de branches et workflow Git |
+| `ci-cd.md` | Toujours vérifier que `bun run build` fonctionne après modifications |
+| `validate-implemention-code.md` | Processus de validation : TypeScript, build, tests E2E |
+| `test-e2e-with-test-id.md` | Utiliser `data-testid` pour les sélecteurs E2E (pas de texte) |
+| `where-write-md-files.md` | Écrire les fichiers markdown dans `./CLAUDE_FILES/` |
+
+**Processus de validation après implémentation :**
+1. ✔ Vérification TypeScript (`tsc --noEmit`)
+2. ✔ Build réussit (`bun run build`)
+3. ✔ Tests E2E pertinents passent
+4. ✔ Créer/mettre à jour les tests E2E pour les nouvelles fonctionnalités
+
+**Communication :** Le français est la langue de communication par défaut.
+
 ## Architecture du Projet
 
 ### Structure des Dossiers
@@ -221,6 +263,21 @@ server/
     ├── middlewares/     # Auth, error handling
     ├── validators/      # Schémas Zod
     └── types/           # Types partagés backend
+```
+
+**Tests E2E (`/tests`):**
+```
+tests/
+└── e2e/
+    ├── auth/            # Tests authentification (login, logout)
+    ├── professor/       # Tests interface professeur
+    └── navigation/      # Tests navigation (sidebar)
+```
+
+**Scripts (`/scripts`):**
+```
+scripts/
+└── dev-start.ts         # Script de démarrage intelligent
 ```
 
 ### Architecture de Navigation
@@ -392,6 +449,8 @@ Le fichier `src/data/mockData.ts` contient des données complètes pour le déve
 - ✅ Base de données PostgreSQL avec Drizzle ORM
 - ✅ Authentification par sessions côté serveur
 - ✅ Pattern Repository pour abstraction DB
+- ✅ Script de démarrage intelligent (`bun dev`)
+- ✅ Tests E2E avec Playwright (auth, dashboard, navigation)
 - Layout principal (Header + Sidebar) complètement fonctionnel
 - Dashboard professeur complètement implémenté
 

@@ -148,7 +148,7 @@ export function Login() {
 
             <p className="text-center text-gray-600 text-sm">
               Pas encore de compte ?{' '}
-              <Link to="/register" className="text-blue-600 hover:text-blue-700 font-medium">
+              <Link data-testid="register-link" to="/register" className="text-blue-600 hover:text-blue-700 font-medium">
                 S'inscrire
               </Link>
             </p>
