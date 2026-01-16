@@ -46,7 +46,7 @@ class EvaluationService {
   }
 
   async create(professorId: string, data: CreateEvaluationInput): Promise<EvaluationWithQuestions> {
-    const { classIds, ...evaluationData } = data;
+    const { classIds, questions, ...evaluationData } = data;
 
     const evaluation = await evaluationRepository.create({
       ...evaluationData,
@@ -65,9 +65,22 @@ class EvaluationService {
       );
     }
 
+    // Add questions if provided
+    let createdQuestions: Question[] = [];
+    if (questions && questions.length > 0) {
+      createdQuestions = await Promise.all(
+        questions.map((question) =>
+          questionRepository.create({
+            ...question,
+            evaluationId: evaluation.id,
+          })
+        )
+      );
+    }
+
     return {
       ...evaluation,
-      questions: [],
+      questions: createdQuestions,
       classIds: classIds ?? [],
     };
   }

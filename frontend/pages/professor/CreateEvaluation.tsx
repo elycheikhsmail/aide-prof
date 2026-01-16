@@ -1,17 +1,20 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Loader2 } from 'lucide-react';
 import { Button, Input, Select, Card } from '../../components/ui';
 import { ICEvaluationForm } from './evaluation-forms/ICEvaluationForm';
 import { MathsEvaluationForm } from './evaluation-forms/MathsEvaluationForm';
 import { AREvaluationForm } from './evaluation-forms/AREvaluationForm';
 import { subjectsApi, type Subject } from '../../services/subjectsApi';
 import { useClasses } from '../../contexts/ClassesContext';
+import { useEvaluations } from '../../contexts/EvaluationsContext';
 
 export function CreateEvaluation() {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const { classes } = useClasses();
+  const { addEvaluation, isLoading, error, clearError } = useEvaluations();
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Étape 1: Informations générales
   const [title, setTitle] = useState('');
@@ -19,6 +22,7 @@ export function CreateEvaluation() {
   const [classId, setClassId] = useState('');
   const [date, setDate] = useState('');
   const [duration, setDuration] = useState('');
+  const [totalPoints, setTotalPoints] = useState('');
 
   // Données spécifiques à chaque matière
   const [evaluationData, setEvaluationData] = useState<any>(null);
@@ -47,20 +51,30 @@ export function CreateEvaluation() {
     }
   };
 
-  const handleSubmit = () => {
-    const evaluation = {
+  const handleSubmit = async () => {
+    setSubmitError(null);
+    clearError();
+
+    // Convertir les données au format attendu par l'API
+    const evaluationPayload = {
       title,
-      discipline,
-      classId,
+      subject: discipline, // L'API attend "subject", pas "discipline"
       date,
-      duration,
-      content: evaluationData,
+      duration: parseInt(duration, 10),
+      totalPoints: parseInt(totalPoints, 10),
+      classIds: classId ? [classId] : [], // L'API attend un tableau
     };
-    console.log('Évaluation créée:', evaluation);
-    navigate('/evaluations');
+
+    const result = await addEvaluation(evaluationPayload);
+
+    if (result) {
+      navigate('/evaluations');
+    } else {
+      setSubmitError('Erreur lors de la création de l\'évaluation. Veuillez réessayer.');
+    }
   };
 
-  const canProceedStep1 = title && discipline && classId && date && duration;
+  const canProceedStep1 = title && discipline && classId && date && duration && totalPoints;
 
   // Helper to determine which form to show based on subject code
   const getEvaluationForm = () => {
@@ -166,7 +180,7 @@ export function CreateEvaluation() {
                 required
               />
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <Input
                   label="Date de l'évaluation"
                   type="date"
@@ -181,6 +195,15 @@ export function CreateEvaluation() {
                   value={duration}
                   onChange={(e) => setDuration(e.target.value)}
                   placeholder="Ex: 120"
+                  required
+                />
+
+                <Input
+                  label="Total de points"
+                  type="number"
+                  value={totalPoints}
+                  onChange={(e) => setTotalPoints(e.target.value)}
+                  placeholder="Ex: 20"
                   required
                 />
               </div>
@@ -233,7 +256,18 @@ export function CreateEvaluation() {
                   <span className="font-semibold text-gray-700">Durée: </span>
                   <span className="text-gray-900">{duration} minutes</span>
                 </div>
+                <div>
+                  <span className="font-semibold text-gray-700">Total de points: </span>
+                  <span className="text-gray-900">{totalPoints}</span>
+                </div>
               </div>
+
+              {/* Affichage des erreurs */}
+              {(submitError || error) && (
+                <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                  {submitError || error}
+                </div>
+              )}
 
               <div className="mt-6">
                 <h3 className="font-semibold text-gray-900 mb-3">Contenu:</h3>
@@ -265,9 +299,18 @@ export function CreateEvaluation() {
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           ) : (
-            <Button onClick={handleSubmit}>
-              <Check className="w-4 h-4 mr-2" />
-              Créer l'évaluation
+            <Button onClick={handleSubmit} disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Création en cours...
+                </>
+              ) : (
+                <>
+                  <Check className="w-4 h-4 mr-2" />
+                  Créer l'évaluation
+                </>
+              )}
             </Button>
           )}
         </div>

@@ -211,6 +211,50 @@ export function generateCombinedSheet(evaluation: Evaluation): void {
 }
 
 /**
+ * Prévisualise le PDF dans un nouvel onglet du navigateur
+ */
+export function previewCombinedSheet(evaluation: Evaluation): void {
+  const html = createEvaluationHTML(evaluation, true, true);
+
+  const element = document.createElement('div');
+  element.innerHTML = html;
+  element.style.display = 'none';
+  document.body.appendChild(element);
+
+  const opt = {
+    margin: [10, 10] as [number, number],
+    filename: `${evaluation.title.replace(/[^a-z0-9]/gi, '_')}_feuille_reponse.pdf`,
+    image: { type: 'jpeg' as const, quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true },
+    jsPDF: { unit: 'mm' as const, format: 'a4' as const, orientation: 'portrait' as const }
+  };
+
+  const firstChild = element.firstElementChild as HTMLElement;
+  if (!firstChild) {
+    document.body.removeChild(element);
+    throw new Error('Impossible de générer le PDF: élément non trouvé');
+  }
+
+  console.log('Prévisualisation du PDF pour:', evaluation.title);
+
+  html2pdf()
+    .from(firstChild)
+    .set(opt)
+    .outputPdf('bloburl')
+    .then((blobUrl: string) => {
+      console.log('PDF prévisualisé avec succès');
+      document.body.removeChild(element);
+      // Ouvrir le PDF dans un nouvel onglet
+      window.open(blobUrl, '_blank');
+    })
+    .catch((error: Error) => {
+      console.error('Erreur lors de la prévisualisation du PDF:', error);
+      document.body.removeChild(element);
+      throw error;
+    });
+}
+
+/**
  * Génère deux PDF séparés : un avec les questions, un avec les espaces de réponse
  */
 export function generateSeparateSheets(evaluation: Evaluation): void {

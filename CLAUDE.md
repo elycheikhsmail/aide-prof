@@ -243,23 +243,24 @@ Le projet contient des règles spécifiques pour Claude Code dans `.claude/rules
 
 ### Structure des Dossiers
 
-**Frontend (`/src`):**
+**Frontend (`/frontend`):**
 ```
-src/
+frontend/
 ├── components/
 │   ├── ui/              # Composants UI réutilisables (Button, Card, Badge, etc.)
 │   ├── layout/          # Composants de layout (Header, Sidebar, MainLayout)
 │   ├── professor/       # Composants spécifiques aux professeurs
 │   └── student/         # Composants spécifiques aux étudiants
 ├── pages/
-│   ├── professor/       # Pages professeur (Dashboard, etc.)
+│   ├── professor/       # Pages professeur (Dashboard, Evaluations, etc.)
 │   └── student/         # Pages étudiant (à implémenter)
-├── data/
-│   └── mockData.ts      # Données mockées pour le développement
+├── contexts/            # Contextes React (Auth, Evaluations, Classes)
+├── services/            # Services API (api.ts, subjectsApi.ts)
 ├── types/
 │   └── index.ts         # Types TypeScript partagés
+├── utils/               # Fonctions utilitaires (pdfGenerator, validators)
 ├── hooks/               # Custom React hooks
-├── utils/               # Fonctions utilitaires
+├── config/              # Configuration (env.ts)
 ├── App.tsx              # Composant principal avec navigation
 ├── main.tsx             # Point d'entrée
 └── index.css            # Styles globaux Tailwind
@@ -317,7 +318,8 @@ L'application utilise **React Router DOM** pour la navigation:
 
 **Routes configurées:**
 - `/` → ProfessorDashboard (page complète avec statistiques et données)
-- `/evaluations` → Evaluations (placeholder)
+- `/evaluations` → Evaluations (liste paginée avec actions)
+- `/evaluations/create` → CreateEvaluation (formulaire en 3 étapes)
 - `/classes` → Classes (placeholder)
 - `/statistics` → Statistics (placeholder)
 - `/settings` → Settings (placeholder)
@@ -378,14 +380,35 @@ Exportés depuis `src/components/layout/index.ts`:
 - `GET /classes/:id/students` - Étudiants d'une classe
 
 **Routes évaluations (`/evaluations`):**
-- `GET /evaluations` - Liste des évaluations
-- `POST /evaluations` - Créer une évaluation
+- `GET /evaluations` - Liste des évaluations (avec questions)
+- `POST /evaluations` - Créer une évaluation (avec questions optionnelles)
 - `GET /evaluations/:id` - Détail d'une évaluation
 - `PATCH /evaluations/:id` - Modifier une évaluation
 - `DELETE /evaluations/:id` - Supprimer une évaluation
 - `GET /evaluations/:id/questions` - Questions d'une évaluation
 - `POST /evaluations/:id/questions` - Ajouter une question
 - `GET /evaluations/:id/copies` - Copies d'étudiants
+
+**Création d'évaluation avec questions (POST /evaluations):**
+```json
+{
+  "title": "Évaluation Maths T1",
+  "subject": "Mathématiques",
+  "date": "2025-01-20",
+  "duration": 120,
+  "totalPoints": 20,
+  "classIds": ["uuid1", "uuid2"],
+  "questions": [
+    {
+      "number": 1,
+      "statement": "Calculer l'intégrale...",
+      "modelAnswer": "La réponse est...",
+      "points": 5,
+      "estimatedLines": 10
+    }
+  ]
+}
+```
 
 **Routes étudiants (`/students`):**
 - `GET /students` - Liste des étudiants
@@ -453,11 +476,26 @@ Le fichier `src/data/mockData.ts` contient des données complètes pour le déve
    - Modal de création d'évaluation (formulaire avec Input/Select)
 2. ✅ Layout avec Header et Sidebar fonctionnels
 3. ✅ Navigation avec React Router DOM (routes et NavLink)
-4. ✅ Pages placeholder pour Évaluations, Classes, Statistiques, Paramètres
+4. ✅ Page Évaluations complète avec:
+   - Liste paginée (10 évaluations par page)
+   - Boutons Suivant/Précédent en haut et en bas de la liste
+   - Bouton Actualiser pour rafraîchir la liste
+   - Bouton Aperçu PDF (ouvre le PDF dans un nouvel onglet)
+   - Bouton Générer PDF (télécharge le PDF)
+   - Bouton Supprimer (icône poubelle rouge)
+   - Import d'évaluations via JSON (avec questions)
+5. ✅ Création d'évaluation (formulaire en 3 étapes):
+   - Étape 1: Informations générales (titre, matière, classe, date, durée, total points)
+   - Étape 2: Contenu de l'évaluation (formulaires spécifiques par matière)
+   - Étape 3: Aperçu et validation
+6. ✅ Génération de PDF:
+   - Option 1: Feuille unique (questions + espaces de réponse)
+   - Option 2: Feuilles séparées (questions / réponses)
+   - Support de l'arabe (RTL, police Amiri)
+7. ✅ Pages placeholder pour Classes, Statistiques, Paramètres
 
 **À Implémenter:**
-- Pages: Évaluations, Classes, Statistiques, Paramètres
-- Création d'évaluations (4 étapes: infos, questions, barème, aperçu)
+- Pages: Classes, Statistiques, Paramètres (contenu)
 - Scanner de copies (upload PDF/images)
 - Association copies-étudiants (OCR + suggestions)
 - Révision et correction des copies
@@ -475,51 +513,69 @@ Le fichier `src/data/mockData.ts` contient des données complètes pour le déve
 - ✅ Pattern Repository pour abstraction DB
 - ✅ Script de démarrage intelligent (`bun dev`)
 - ✅ Tests E2E avec Playwright (auth, dashboard, navigation)
-- Layout principal (Header + Sidebar) complètement fonctionnel
-- Dashboard professeur complètement implémenté
+- ✅ Layout principal (Header + Sidebar) complètement fonctionnel
+- ✅ Dashboard professeur complètement implémenté
+- ✅ Page Évaluations connectée au backend (CRUD complet)
+- ✅ Contextes React pour la gestion d'état (Auth, Evaluations, Classes)
+- ✅ Génération de PDF avec html2pdf.js
+- ✅ Import d'évaluations via JSON avec validation
 
 **À implémenter:**
-- Connecter le frontend au backend (remplacer les données mockées)
-- State management global si nécessaire (suggéré: Zustand ou Context API)
-- Validation de formulaires frontend (suggéré: React Hook Form + Zod)
-- Contenu des pages Évaluations, Classes, Statistiques, Paramètres
+- Contenu des pages Classes, Statistiques, Paramètres
+- Formulaire de création d'évaluation: envoyer les questions au backend
+- Scanner de copies (upload PDF/images)
 - Interface étudiant complète
 
 **Conventions de code:**
-- Utiliser les composants UI depuis `src/components/ui/index.ts`
-- Utiliser les composants layout depuis `src/components/layout/index.ts`
+- Utiliser les composants UI depuis `frontend/components/ui/index.ts`
+- Utiliser les composants layout depuis `frontend/components/layout/index.ts`
+- Utiliser les contextes depuis `frontend/contexts/`
 - Imports de types avec `import type { ... }` pour optimiser le bundle
 - Classes Tailwind: mobile-first, utiliser les breakpoints `md:` et `lg:`
 - Nommer les composants en PascalCase, fichiers en PascalCase.tsx
 - Props interfaces nommées `[ComponentName]Props`
+- Utiliser `data-testid` pour les éléments testables E2E
 
 **Patterns d'utilisation:**
 ```tsx
 // Import des composants UI
-import { Button, Card, Badge, StatCard, Modal } from './components/ui';
+import { Button, Card, Badge, StatCard, Modal } from '../../components/ui';
 
 // Import des composants layout
-import { MainLayout, Header, Sidebar } from './components/layout';
+import { MainLayout, Header, Sidebar } from '../../components/layout';
+
+// Import des contextes
+import { useEvaluations } from '../../contexts/EvaluationsContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { useClasses } from '../../contexts/ClassesContext';
 
 // Import React Router
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 
 // Import des types
-import type { Evaluation, Student } from './types';
+import type { Evaluation, Student } from '../../types';
 
-// Import des données mockées
-import { mockEvaluations, mockStatistics } from './data/mockData';
+// Import des utilitaires PDF
+import { generateCombinedSheet, previewCombinedSheet } from '../../utils/pdfGeneratorHtml2Pdf';
+
+// Utilisation du contexte Evaluations
+const { evaluations, addEvaluation, removeEvaluation, refreshEvaluations, isLoading } = useEvaluations();
+
+// Création d'une évaluation avec questions
+await addEvaluation({
+  title: 'Mon évaluation',
+  subject: 'Mathématiques',
+  date: '2025-01-20',
+  duration: 120,
+  totalPoints: 20,
+  questions: [
+    { number: 1, statement: 'Question 1', points: 5, estimatedLines: 5 }
+  ]
+});
 
 // Utilisation de la navigation programmatique
 const navigate = useNavigate();
 navigate('/evaluations'); // Navigue vers /evaluations
+navigate('/evaluations/create'); // Navigue vers création
 navigate(-1); // Retour arrière
-
-// Utilisation de NavLink pour menu actif
-<NavLink
-  to="/dashboard"
-  className={({ isActive }) => isActive ? 'active-class' : 'inactive-class'}
->
-  Dashboard
-</NavLink>
 ```

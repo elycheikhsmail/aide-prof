@@ -155,6 +155,13 @@ export const evaluationsApi = {
     duration: number;
     totalPoints: number;
     classIds?: string[];
+    questions?: {
+      number: number;
+      statement: string;
+      modelAnswer?: string;
+      points: number;
+      estimatedLines?: number;
+    }[];
   }) => {
     return apiFetch<{ evaluation: ApiEvaluation }>('/evaluations', {
       method: 'POST',

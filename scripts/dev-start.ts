@@ -130,7 +130,7 @@ async function startServers(): Promise<void> {
   console.log('');
 
   // Lance les deux serveurs en parallèle avec concurrently
-  const proc = Bun.spawn(['bunx', 'concurrently', '-n', 'frontend,backend', '-c', 'cyan,magenta', 'bun run dev:frontend', 'bun run dev:backend'], {
+  const proc = Bun.spawn(['bunx', 'concurrently', '-n', 'frontend,backend', '-c', 'cyan,magenta', 'bun run dev:frontend', 'bun --watch run dev:backend'], {
     stdio: ['inherit', 'inherit', 'inherit'],
     cwd: process.cwd(),
   });

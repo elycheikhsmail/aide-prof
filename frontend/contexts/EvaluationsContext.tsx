@@ -11,6 +11,13 @@ interface CreateEvaluationData {
   duration: number;
   totalPoints: number;
   classIds?: string[];
+  questions?: {
+    number: number;
+    statement: string;
+    modelAnswer?: string;
+    points: number;
+    estimatedLines?: number;
+  }[];
 }
 
 interface EvaluationsContextType {

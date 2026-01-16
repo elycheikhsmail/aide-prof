@@ -14,7 +14,8 @@
       "Bash(bun run test:e2e)",
       "Bash(bun run db:seed:*)",
       "Bash(docker compose:*)",
-      "Bash(bun run test:e2e:*)"
+      "Bash(bun run test:e2e:*)",
+      "Bash(find:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
