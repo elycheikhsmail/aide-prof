@@ -24,7 +24,7 @@ class StorageService {
   }
 
   async uploadPdf(fileName: string, buffer: Buffer): Promise<string> {
-    await this.client.putObject(this.bucket, fileName, buffer, {
+    await this.client.putObject(this.bucket, fileName, buffer, buffer.length, {
       'Content-Type': 'application/pdf',
     });
     return this.getFileUrl(fileName);

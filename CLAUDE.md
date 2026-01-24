@@ -7,7 +7,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Stack technique:**
 - **Frontend:** React 19.2 + TypeScript 5.9 + Vite 7.x + Tailwind CSS 4.x + React Router 7.11
-- **Backend:** Hono.js + Drizzle ORM + PostgreSQL + Zod
+- **Backend:** Hono.js + Drizzle ORM + PostgreSQL + Zod + Puppeteer (PDF)
+- **Stockage:** MinIO (S3 compatible) pour les fichiers PDF
 
 ## Development Commands
 
@@ -27,11 +28,18 @@ bun dev
 **Le script `bun dev` fait automatiquement :**
 1. Démarre PostgreSQL via Docker si pas déjà lancé
 2. Attend que PostgreSQL soit prêt
-3. Push le schéma Drizzle si les tables n'existent pas
-4. Seed la base de données si pas de données
-5. Lance le backend (http://localhost:3000) et le frontend (http://localhost:5173) en parallèle
+3. Démarre MinIO (stockage S3) via Docker si pas déjà lancé
+4. Attend que MinIO soit prêt
+5. Push le schéma Drizzle si les tables n'existent pas
+6. Seed la base de données si pas de données
+7. Lance le backend (http://localhost:3000) et le frontend (http://localhost:5173) en parallèle
 
 **Plus besoin de lancer Docker manuellement !**
+
+**Installation de Chrome pour Puppeteer (première fois) :**
+```bash
+cd server && bunx puppeteer browsers install chrome
+```
 
 ### Frontend (racine du projet)
 
@@ -76,11 +84,15 @@ bun install
 
 **Note:** En développement normal, utilisez `bun dev` depuis la racine du projet. Cette commande démarre automatiquement PostgreSQL et le backend.
 
-**Démarrer PostgreSQL manuellement (si nécessaire):**
+**Démarrer les services Docker manuellement (si nécessaire):**
 ```bash
 docker compose up -d postgres
 # Démarre PostgreSQL sur localhost:5432
 # User: aideprof, Password: aideprof_secret, DB: aideprof
+
+docker compose up -d minio
+# Démarre MinIO sur localhost:9000 (API) et localhost:9001 (Console)
+# User: aideprof_minio, Password: aideprof_minio_secret
 ```
 
 **Development server (backend seul):**
@@ -255,7 +267,7 @@ frontend/
 │   ├── professor/       # Pages professeur (Dashboard, Evaluations, etc.)
 │   └── student/         # Pages étudiant (à implémenter)
 ├── contexts/            # Contextes React (Auth, Evaluations, Classes)
-├── services/            # Services API (api.ts, subjectsApi.ts)
+├── services/            # Services API (api.ts, subjectsApi.ts, pdfApi.ts)
 ├── types/
 │   └── index.ts         # Types TypeScript partagés
 ├── utils/               # Fonctions utilitaires (pdfGenerator, validators)
@@ -356,6 +368,7 @@ Exportés depuis `src/components/layout/index.ts`:
 - `Class` - Classe d'étudiants
 - `Evaluation` - Évaluation/examen avec questions
 - `Question` - Question d'une évaluation avec barème
+- `EvaluationPdf` - PDF généré pour une évaluation (stocké dans MinIO)
 - `StudentCopy` - Copie d'étudiant scannée
 - `Answer` - Réponse d'un étudiant avec score AI
 - `Student` - Étudiant avec statistiques
@@ -410,6 +423,26 @@ Exportés depuis `src/components/layout/index.ts`:
 }
 ```
 
+**Routes PDF (`/evaluations/:id/pdf`):**
+- `POST /evaluations/:id/pdf/generate` - Génère un PDF côté serveur et le stocke dans MinIO
+- `GET /evaluations/:id/pdf` - Récupère l'URL signée du PDF (type: combined, questions, answers)
+- `GET /evaluations/:id/pdfs` - Liste tous les PDFs d'une évaluation
+
+**Génération de PDF (POST /evaluations/:id/pdf/generate):**
+```json
+{
+  "type": "combined"  // "combined" | "questions" | "answers"
+}
+```
+Réponse:
+```json
+{
+  "message": "PDF généré avec succès",
+  "url": "https://minio.../presigned-url",
+  "type": "combined"
+}
+```
+
 **Routes étudiants (`/students`):**
 - `GET /students` - Liste des étudiants
 - `POST /students` - Créer un étudiant
@@ -442,6 +475,20 @@ Le fichier `src/data/mockData.ts` contient des données complètes pour le déve
 
 ## Configuration Technique
 
+**Variables d'environnement (server/.env.development):**
+```env
+# Base de données
+DATABASE_URL=postgres://aideprof:aideprof_secret@localhost:5432/aideprof
+
+# MinIO (stockage S3)
+MINIO_ENDPOINT=localhost
+MINIO_PORT=9000
+MINIO_ACCESS_KEY=aideprof_minio
+MINIO_SECRET_KEY=aideprof_minio_secret
+MINIO_BUCKET_NAME=aide-prof-pdfs
+MINIO_USE_SSL=false
+```
+
 **TypeScript:**
 - Mode strict activé avec linting strict (noUnusedLocals, noUnusedParameters)
 - Project references: `tsconfig.app.json` (app) + `tsconfig.node.json` (build config)
@@ -466,6 +513,11 @@ Le fichier `src/data/mockData.ts` contient des données complètes pour le déve
 - Import: `import { IconName } from 'lucide-react'`
 - Exemple: `<FileText className="w-5 h-5" />`
 
+**Backend - Génération PDF:**
+- Puppeteer avec Chrome headless pour le rendu HTML→PDF
+- MinIO SDK (`minio`) pour le stockage S3 compatible
+- Installation Chrome: `cd server && bunx puppeteer browsers install chrome`
+
 ## Fonctionnalités Implémentées
 
 **Interface Professeur:**
@@ -488,10 +540,13 @@ Le fichier `src/data/mockData.ts` contient des données complètes pour le déve
    - Étape 1: Informations générales (titre, matière, classe, date, durée, total points)
    - Étape 2: Contenu de l'évaluation (formulaires spécifiques par matière)
    - Étape 3: Aperçu et validation
-6. ✅ Génération de PDF:
+6. ✅ Génération de PDF côté serveur:
+   - Génération avec Puppeteer (headless Chrome) côté backend
+   - Stockage des PDFs dans MinIO (S3 compatible)
    - Option 1: Feuille unique (questions + espaces de réponse)
    - Option 2: Feuilles séparées (questions / réponses)
    - Support de l'arabe (RTL, police Amiri)
+   - URLs signées avec expiration (7 jours)
 7. ✅ Pages placeholder pour Classes, Statistiques, Paramètres
 
 **À Implémenter:**
@@ -517,7 +572,8 @@ Le fichier `src/data/mockData.ts` contient des données complètes pour le déve
 - ✅ Dashboard professeur complètement implémenté
 - ✅ Page Évaluations connectée au backend (CRUD complet)
 - ✅ Contextes React pour la gestion d'état (Auth, Evaluations, Classes)
-- ✅ Génération de PDF avec html2pdf.js
+- ✅ Génération de PDF côté serveur avec Puppeteer
+- ✅ Stockage des PDFs dans MinIO (S3 compatible)
 - ✅ Import d'évaluations via JSON avec validation
 
 **À implémenter:**
@@ -555,8 +611,8 @@ import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 // Import des types
 import type { Evaluation, Student } from '../../types';
 
-// Import des utilitaires PDF
-import { generateCombinedSheet, previewCombinedSheet } from '../../utils/pdfGeneratorHtml2Pdf';
+// Import du service PDF (génération côté serveur)
+import { pdfApi } from '../../services/pdfApi';
 
 // Utilisation du contexte Evaluations
 const { evaluations, addEvaluation, removeEvaluation, refreshEvaluations, isLoading } = useEvaluations();
@@ -578,4 +634,12 @@ const navigate = useNavigate();
 navigate('/evaluations'); // Navigue vers /evaluations
 navigate('/evaluations/create'); // Navigue vers création
 navigate(-1); // Retour arrière
+
+// Génération de PDF côté serveur
+const result = await pdfApi.generatePdf(evaluationId, 'combined');
+window.open(result.url, '_blank'); // Ouvre le PDF dans un nouvel onglet
+
+// Récupérer un PDF existant
+const pdf = await pdfApi.getPdfUrl(evaluationId, 'combined');
+window.open(pdf.url, '_blank');
 ```
