@@ -6,7 +6,8 @@ import { ImportEvaluationModal } from '../../components/professor/ImportEvaluati
 import { EditEvaluationModal } from '../../components/professor/EditEvaluationModal';
 import { GeneratePdfModal, type PdfGenerationOptions } from '../../components/professor/GeneratePdfModal';
 import { useEvaluations } from '../../contexts/EvaluationsContext';
-import { generateCombinedSheet, generateSeparateSheets, previewCombinedSheet } from '../../utils/pdfGeneratorHtml2Pdf';
+import { pdfApi } from '../../services/pdfApi';
+import { ApiError } from '../../services/api';
 import type { Evaluation } from '../../types';
 
 const ITEMS_PER_PAGE = 10;
@@ -19,6 +20,7 @@ export function Evaluations() {
   const [selectedEvaluation, setSelectedEvaluation] = useState<Evaluation | null>(null);
   const [isGeneratePdfModalOpen, setIsGeneratePdfModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isPdfLoading, setIsPdfLoading] = useState(false);
 
   // Calcul de la pagination
   const totalPages = Math.ceil(evaluations.length / ITEMS_PER_PAGE);
@@ -88,23 +90,52 @@ export function Evaluations() {
     setIsGeneratePdfModalOpen(true);
   };
 
-  const handlePdfGenerate = (options: PdfGenerationOptions) => {
+  const openPdf = (url: string) => {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const handlePdfGenerate = async (options: PdfGenerationOptions) => {
     if (!selectedEvaluation) return;
 
     try {
-      // Générer les PDF selon les options sélectionnées
+      setIsPdfLoading(true);
+
       if (options.combinedSheet) {
-        generateCombinedSheet(selectedEvaluation);
-      }
-      if (options.separateSheets) {
-        generateSeparateSheets(selectedEvaluation);
+        const result = await pdfApi.generatePdf(selectedEvaluation.id, 'combined');
+        openPdf(result.url);
       }
 
-      // Fermer le modal après génération
+      if (options.separateSheets) {
+        const questionsResult = await pdfApi.generatePdf(selectedEvaluation.id, 'questions');
+        openPdf(questionsResult.url);
+        const answersResult = await pdfApi.generatePdf(selectedEvaluation.id, 'answers');
+        openPdf(answersResult.url);
+      }
+
       setIsGeneratePdfModalOpen(false);
     } catch (error) {
       console.error('Erreur lors de la génération du PDF:', error);
       alert('Une erreur est survenue lors de la génération du PDF');
+    } finally {
+      setIsPdfLoading(false);
+    }
+  };
+
+  const handlePreviewPdf = async (evaluationId: string) => {
+    try {
+      setIsPdfLoading(true);
+      const result = await pdfApi.getPdfUrl(evaluationId, 'combined');
+      openPdf(result.url);
+    } catch (error) {
+      if (error instanceof ApiError && error.statusCode === 404) {
+        const generated = await pdfApi.generatePdf(evaluationId, 'combined');
+        openPdf(generated.url);
+        return;
+      }
+      console.error('Erreur lors de la prévisualisation du PDF:', error);
+      alert('Une erreur est survenue lors de la prévisualisation du PDF');
+    } finally {
+      setIsPdfLoading(false);
     }
   };
 
@@ -251,8 +282,9 @@ export function Evaluations() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => previewCombinedSheet(evaluation)}
+                            onClick={() => handlePreviewPdf(evaluation.id)}
                             data-testid={`preview-evaluation-${evaluation.id}`}
+                            disabled={isPdfLoading}
                           >
                             <Eye className="w-4 h-4 mr-1" />
                             Aperçu
@@ -261,6 +293,7 @@ export function Evaluations() {
                             variant="outline"
                             size="sm"
                             onClick={() => handleGeneratePdf(evaluation)}
+                            disabled={isPdfLoading}
                           >
                             <FileDown className="w-4 h-4 mr-1" />
                             Générer PDF
@@ -309,6 +342,7 @@ export function Evaluations() {
         onClose={() => setIsGeneratePdfModalOpen(false)}
         evaluation={selectedEvaluation}
         onGenerate={handlePdfGenerate}
+        isLoading={isPdfLoading}
       />
     </>
   );

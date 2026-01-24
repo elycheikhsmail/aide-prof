@@ -13,6 +13,7 @@
 import { $ } from 'bun';
 
 const CONTAINER_NAME = 'aide-prof-db-test';
+const MINIO_CONTAINER_NAME = 'aide-prof-minio';
 const DB_USER = 'aideprof_test';
 const DB_NAME = 'aideprof_test';
 
@@ -35,10 +36,11 @@ function logStep(step: string) {
   console.log(`\n${colors.bold}${colors.cyan}[${step}]${colors.reset}`);
 }
 
-async function isContainerRunning(): Promise<boolean> {
+async function isContainerRunning(containerName: string): Promise<boolean> {
   try {
-    const result = await $`docker ps --filter "name=${CONTAINER_NAME}" --filter "status=running" --format "{{.Names}}"`.quiet();
-    return result.text().trim() === CONTAINER_NAME;
+    const result =
+      await $`docker ps --filter "name=${containerName}" --filter "status=running" --format "{{.Names}}"`.quiet();
+    return result.text().trim() === containerName;
   } catch {
     return false;
   }
@@ -47,13 +49,26 @@ async function isContainerRunning(): Promise<boolean> {
 async function startPostgres(): Promise<void> {
   logStep('1. Vérification de PostgreSQL (test)');
 
-  if (await isContainerRunning()) {
+  if (await isContainerRunning(CONTAINER_NAME)) {
     log('  ✓ PostgreSQL (test) est déjà en cours d\'exécution', 'green');
     return;
   }
 
   log('  → Démarrage de PostgreSQL (test) via Docker...', 'yellow');
   await $`docker compose up -d postgres-test`.quiet();
+  log('  ✓ Container démarré', 'green');
+}
+
+async function startMinio(): Promise<void> {
+  logStep('3. Vérification de MinIO');
+
+  if (await isContainerRunning(MINIO_CONTAINER_NAME)) {
+    log('  ✓ MinIO est déjà en cours d\'exécution', 'green');
+    return;
+  }
+
+  log('  → Démarrage de MinIO via Docker...', 'yellow');
+  await $`docker compose up -d minio`.quiet();
   log('  ✓ Container démarré', 'green');
 }
 
@@ -79,17 +94,40 @@ async function waitForPostgres(maxAttempts = 30): Promise<void> {
   }
 }
 
+async function waitForMinio(maxAttempts = 30): Promise<void> {
+  logStep('4. Attente de MinIO');
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const result = await $`docker inspect --format "{{.State.Health.Status}}" ${MINIO_CONTAINER_NAME}`.quiet();
+      const status = result.text().trim();
+      if (status === 'healthy') {
+        log('  ✓ MinIO est prêt!', 'green');
+        return;
+      }
+    } catch {
+      // Ignore l'erreur et réessaie
+    }
+
+    if (attempt === maxAttempts) {
+      throw new Error('MinIO n\'est pas prêt après ' + maxAttempts + ' tentatives');
+    }
+    process.stdout.write(`  → Tentative ${attempt}/${maxAttempts}...\r`);
+    await Bun.sleep(1000);
+  }
+}
+
 async function checkTablesExist(): Promise<boolean> {
   try {
-    const result = await $`docker exec ${CONTAINER_NAME} psql -U ${DB_USER} -d ${DB_NAME} -tAc "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'users')"`.quiet();
-    return result.text().trim() === 't';
+    const result = await $`docker exec ${CONTAINER_NAME} psql -U ${DB_USER} -d ${DB_NAME} -tAc "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name IN ('users', 'evaluation_pdfs')"`.quiet();
+    return parseInt(result.text().trim(), 10) === 2;
   } catch {
     return false;
   }
 }
 
 async function pushSchema(): Promise<void> {
-  logStep('3. Vérification du schéma');
+  logStep('5. Vérification du schéma');
 
   if (await checkTablesExist()) {
     log('  ✓ Le schéma est déjà en place', 'green');
@@ -97,12 +135,12 @@ async function pushSchema(): Promise<void> {
   }
 
   log('  → Push du schéma Drizzle...', 'yellow');
-  await $`cd server && NODE_ENV=test bun run db:push`.quiet();
+  await $`cd server && NODE_ENV=test bunx drizzle-kit push --force`.quiet();
   log('  ✓ Schéma poussé avec succès', 'green');
 }
 
 async function seedDatabase(): Promise<void> {
-  logStep('4. Seed de la base de données test');
+  logStep('6. Seed de la base de données test');
 
   log('  → Seeding de la base de données test...', 'yellow');
   await $`cd server && NODE_ENV=test bun run db:seed:test`.quiet();
@@ -110,7 +148,7 @@ async function seedDatabase(): Promise<void> {
 }
 
 async function runTests(): Promise<number> {
-  logStep('5. Lancement des tests E2E');
+  logStep('7. Lancement des tests E2E');
 
   // Récupère les arguments supplémentaires passés au script
   const args = process.argv.slice(2);
@@ -137,6 +175,8 @@ async function main() {
   try {
     await startPostgres();
     await waitForPostgres();
+    await startMinio();
+    await waitForMinio();
     await pushSchema();
     await seedDatabase();
     const exitCode = await runTests();

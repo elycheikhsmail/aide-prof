@@ -13,6 +13,7 @@
 import { $ } from 'bun';
 
 const CONTAINER_NAME = 'aide-prof-db';
+const MINIO_CONTAINER_NAME = 'aide-prof-minio';
 const DB_USER = 'aideprof';
 const DB_NAME = 'aideprof';
 
@@ -34,10 +35,11 @@ function logStep(step: string) {
   console.log(`\n${colors.bold}${colors.blue}[${step}]${colors.reset}`);
 }
 
-async function isContainerRunning(): Promise<boolean> {
+async function isContainerRunning(containerName: string): Promise<boolean> {
   try {
-    const result = await $`docker ps --filter "name=${CONTAINER_NAME}" --filter "status=running" --format "{{.Names}}"`.quiet();
-    return result.text().trim() === CONTAINER_NAME;
+    const result =
+      await $`docker ps --filter "name=${containerName}" --filter "status=running" --format "{{.Names}}"`.quiet();
+    return result.text().trim() === containerName;
   } catch {
     return false;
   }
@@ -46,13 +48,26 @@ async function isContainerRunning(): Promise<boolean> {
 async function startPostgres(): Promise<void> {
   logStep('1. Vérification de PostgreSQL');
 
-  if (await isContainerRunning()) {
+  if (await isContainerRunning(CONTAINER_NAME)) {
     log('  ✓ PostgreSQL est déjà en cours d\'exécution', 'green');
     return;
   }
 
   log('  → Démarrage de PostgreSQL via Docker...', 'yellow');
   await $`docker compose up -d postgres`.quiet();
+  log('  ✓ Container démarré', 'green');
+}
+
+async function startMinio(): Promise<void> {
+  logStep('3. Vérification de MinIO');
+
+  if (await isContainerRunning(MINIO_CONTAINER_NAME)) {
+    log('  ✓ MinIO est déjà en cours d\'exécution', 'green');
+    return;
+  }
+
+  log('  → Démarrage de MinIO via Docker...', 'yellow');
+  await $`docker compose up -d minio`.quiet();
   log('  ✓ Container démarré', 'green');
 }
 
@@ -78,17 +93,40 @@ async function waitForPostgres(maxAttempts = 30): Promise<void> {
   }
 }
 
+async function waitForMinio(maxAttempts = 30): Promise<void> {
+  logStep('4. Attente de MinIO');
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const result = await $`docker inspect --format "{{.State.Health.Status}}" ${MINIO_CONTAINER_NAME}`.quiet();
+      const status = result.text().trim();
+      if (status === 'healthy') {
+        log('  ✓ MinIO est prêt!', 'green');
+        return;
+      }
+    } catch {
+      // Ignore l'erreur et réessaie
+    }
+
+    if (attempt === maxAttempts) {
+      throw new Error('MinIO n\'est pas prêt après ' + maxAttempts + ' tentatives');
+    }
+    process.stdout.write(`  → Tentative ${attempt}/${maxAttempts}...\r`);
+    await Bun.sleep(1000);
+  }
+}
+
 async function checkTablesExist(): Promise<boolean> {
   try {
-    const result = await $`docker exec ${CONTAINER_NAME} psql -U ${DB_USER} -d ${DB_NAME} -tAc "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'users')"`.quiet();
-    return result.text().trim() === 't';
+    const result = await $`docker exec ${CONTAINER_NAME} psql -U ${DB_USER} -d ${DB_NAME} -tAc "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name IN ('users', 'evaluation_pdfs')"`.quiet();
+    return parseInt(result.text().trim(), 10) === 2;
   } catch {
     return false;
   }
 }
 
 async function pushSchema(): Promise<void> {
-  logStep('3. Vérification du schéma');
+  logStep('5. Vérification du schéma');
 
   if (await checkTablesExist()) {
     log('  ✓ Le schéma est déjà en place', 'green');
@@ -96,7 +134,7 @@ async function pushSchema(): Promise<void> {
   }
 
   log('  → Push du schéma Drizzle...', 'yellow');
-  await $`cd server && bun run db:push`.quiet();
+  await $`cd server && bunx drizzle-kit push --force`.quiet();
   log('  ✓ Schéma poussé avec succès', 'green');
 }
 
@@ -111,7 +149,7 @@ async function checkDataExists(): Promise<boolean> {
 }
 
 async function seedDatabase(): Promise<void> {
-  logStep('4. Vérification des données');
+  logStep('6. Vérification des données');
 
   if (await checkDataExists()) {
     log('  ✓ La base de données est déjà seedée', 'green');
@@ -124,7 +162,7 @@ async function seedDatabase(): Promise<void> {
 }
 
 async function startServers(): Promise<void> {
-  logStep('5. Démarrage des serveurs');
+  logStep('7. Démarrage des serveurs');
 
   log('  → Lancement du backend (http://localhost:3000) et du frontend (http://localhost:5173)...', 'blue');
   console.log('');
@@ -146,6 +184,8 @@ async function main() {
   try {
     await startPostgres();
     await waitForPostgres();
+    await startMinio();
+    await waitForMinio();
     await pushSchema();
     await seedDatabase();
     await startServers();

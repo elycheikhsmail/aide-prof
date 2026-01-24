@@ -65,7 +65,7 @@ export class ApiError extends Error {
 }
 
 // Generic fetch wrapper with credentials and timeout
-async function apiFetch<T>(
+export async function apiFetch<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {

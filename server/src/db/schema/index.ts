@@ -5,6 +5,7 @@ export * from './classes';
 export * from './evaluations';
 export * from './evaluationClasses';
 export * from './questions';
+export * from './evaluationPdfs';
 export * from './students';
 export * from './studentCopies';
 export * from './answers';

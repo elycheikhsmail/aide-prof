@@ -7,6 +7,7 @@ interface GeneratePdfModalProps {
   onClose: () => void;
   evaluation: Evaluation | null;
   onGenerate: (options: PdfGenerationOptions) => void;
+  isLoading?: boolean;
 }
 
 export interface PdfGenerationOptions {
@@ -14,7 +15,13 @@ export interface PdfGenerationOptions {
   separateSheets: boolean; // Questions et réponses sur des feuilles séparées
 }
 
-export function GeneratePdfModal({ isOpen, onClose, evaluation, onGenerate }: GeneratePdfModalProps) {
+export function GeneratePdfModal({
+  isOpen,
+  onClose,
+  evaluation,
+  onGenerate,
+  isLoading = false,
+}: GeneratePdfModalProps) {
   const [options, setOptions] = useState<PdfGenerationOptions>({
     combinedSheet: false,
     separateSheets: false,
@@ -28,6 +35,7 @@ export function GeneratePdfModal({ isOpen, onClose, evaluation, onGenerate }: Ge
   };
 
   const handleGenerate = () => {
+    if (isLoading) return;
     if (!options.combinedSheet && !options.separateSheets) {
       alert('Veuillez sélectionner au moins une option');
       return;
@@ -49,15 +57,15 @@ export function GeneratePdfModal({ isOpen, onClose, evaluation, onGenerate }: Ge
       title="Générer les feuilles de réponse"
       footer={
         <>
-          <Button variant="ghost" onClick={onClose}>
+          <Button variant="ghost" onClick={onClose} disabled={isLoading}>
             Annuler
           </Button>
           <Button
             variant="primary"
             onClick={handleGenerate}
-            disabled={isGenerateDisabled}
+            disabled={isGenerateDisabled || isLoading}
           >
-            Générer
+            {isLoading ? 'Génération...' : 'Générer'}
           </Button>
         </>
       }
@@ -81,6 +89,7 @@ export function GeneratePdfModal({ isOpen, onClose, evaluation, onGenerate }: Ge
                 type="checkbox"
                 checked={options.combinedSheet}
                 onChange={() => handleCheckboxChange('combinedSheet')}
+                disabled={isLoading}
                 className="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
               <div className="flex-1">
@@ -99,6 +108,7 @@ export function GeneratePdfModal({ isOpen, onClose, evaluation, onGenerate }: Ge
                 type="checkbox"
                 checked={options.separateSheets}
                 onChange={() => handleCheckboxChange('separateSheets')}
+                disabled={isLoading}
                 className="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
               <div className="flex-1">
