@@ -7,21 +7,22 @@ function generateQuestionHtml(
 ): string {
   const pointsLabel = question.points > 1 ? 'points' : 'point';
   const numberOfLines = Math.max(5, question.estimatedLines);
-
-  let html = `
-    <div class="question">
-      <div class="question-header">
-        Question ${question.number} (${question.points} ${pointsLabel})
-      </div>
-  `;
+ let html: string = '';
+  // html = `
+  //   <div class="question">
+  //     <div class="question-header">
+  //       Question ${question.number} (${question.points} ${pointsLabel})
+  //     </div>
+  // `;
 
   if (includeQuestions) {
     html += `
       <div class="question-text">
-        ${question.statement}
+        ${question.statement} (${question.points} ${pointsLabel})
       </div>
     `;
   }
+
 
   if (includeAnswerSpace) {
     html += '<div class="answer-lines">';

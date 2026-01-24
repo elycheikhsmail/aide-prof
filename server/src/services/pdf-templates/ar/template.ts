@@ -7,18 +7,18 @@ function generateQuestionHtml(
 ): string {
   const pointsLabel = question.points > 1 ? 'نقاط' : 'نقطة';
   const numberOfLines = Math.max(5, question.estimatedLines);
-
-  let html = `
-    <div class="question">
-      <div class="question-header">
-        السؤال ${question.number} (${question.points} ${pointsLabel})
-      </div>
-  `;
+  let html: string = '';
+  //  html = `
+  //   <div class="question">
+  //     <div class="question-header">
+  //       السؤال ${question.number} (${question.points} ${pointsLabel})
+  //     </div>
+  // `;
 
   if (includeQuestions) {
     html += `
       <div class="question-text">
-        ${question.statement}
+        ${question.statement} (${question.points} ${pointsLabel})
       </div>
     `;
   }
@@ -43,7 +43,7 @@ export const arabicTemplate: TemplateFunction = (data: TemplateData): string => 
   const studentInfoHtml = data.includeAnswerSpace
     ? `
       <div class="student-info">
-        <div class="student-field">الاسم الكامل: _________________________________ الرقم: _________________________________</div>
+        <div class="student-field">الاسم الكامل: _________________________________________________________________ الرقم: ____</div>
       </div>
     `
     : '';
